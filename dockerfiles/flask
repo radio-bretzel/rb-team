@@ -1,0 +1,17 @@
+FROM radiobretzel/backend:base
+
+LABEL project.component="Radio Bretzel Backend"
+LABEL docker.image.name="radiobretzel/backend:flask"
+LABEL docker.image.version="0.1"
+LABEL docker.image.maintainer="Papy Bretzel <papybretzel@ntymail.com>"
+
+WORKDIR /usr/src/radiobretzel
+COPY hello.py hello.py
+
+RUN pip install --upgrade pip && \
+  pip install Flask
+
+VOLUME /usr/src/radiobretzel
+
+#ENTRYPOINT ["/usr/local/bin/python"]
+CMD ["./hello.py"]

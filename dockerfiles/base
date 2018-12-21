@@ -1,0 +1,3 @@
+FROM  python:3.7-rc-alpine
+
+LABEL docker.image.maintainer="Papy Bretzel <papybretzel@ntymail.com>"
