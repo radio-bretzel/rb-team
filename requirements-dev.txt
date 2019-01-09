@@ -1,5 +1,0 @@
-Flask
-Flask-Testing
-Flask-pymongo
-
-docker
