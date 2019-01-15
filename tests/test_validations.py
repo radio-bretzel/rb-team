@@ -1,6 +1,6 @@
 import pytest
-from rb_backend.utils import validations
-from rb_backend.errors import ValidationError
+from rbcore.utils import validations
+from rbcore.errors import ValidationError
 
 def test_RB_Validator_normalizator():
     validator = validations.RB_Validator()

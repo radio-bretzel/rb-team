@@ -1,38 +1,60 @@
 """Packaging settings."""
 
+import sys
 from codecs import open
 from os.path import abspath, dirname, join
 from subprocess import call
 
-from setuptools import Command, find_packages, setup
-
-from rbcore import __version__
+from setuptools import find_packages, setup
+from setuptools.command.test import test as TestCommand
 
 
 this_dir = abspath(dirname(__file__))
-with open(join(this_dir, 'README.rst'), encoding='utf-8') as file:
+with open(join(this_dir, 'README.md'), encoding='utf-8') as file:
     long_description = file.read()
 
 
-class RunTests(Command):
+class PyTests(TestCommand):
     """Run all tests."""
     description = 'run tests'
-    user_options = []
+    user_options = [("pytest-args=", "a", "Arguments to pass to pytest")]
 
     def initialize_options(self):
-        pass
+        TestCommand.initialize_options(self)
+        self.pytest_args = ""
 
     def finalize_options(self):
         pass
 
     def run(self):
-        """Run all tests!"""
-        errno = call(['py.test', '--cov=simple_backup', '--cov-report=term-missing'])
-        raise SystemExit(errno)
+        import shlex
+        # import here, cause outside the eggs aren't loaded
+        import pytest
+
+        errno = pytest.main(shlex.split(self.pytest_args))
+        sys.exit(errno)
+
+
+setup_requires = [
+    'Flask',
+    'Flask-PyMongo',
+    'cerberus',
+    'docker',
+]
+
+tests_require = [
+    'pytest',
+    'Flask-Testing'
+]
+
+extras_require = {
+    'test': tests_require
+}
+
 
 setup(
     name = 'Radio Bretzel core',
-    version = __version__,
+    version = '0.2.0',
     description = 'Radio Bretzel core app. Make your own webradios !',
     long_description = long_description,
     url = 'https://source.radiobretzel.org/app/rb-core',
@@ -52,16 +74,14 @@ setup(
     ],
     keywords = 'webradio, sharing, music, chat, rooms',
     packages = find_packages(exclude=['docs', 'tests*']),
-    install_requires = [
-        'Flask',
-        'Flask-pymongo',
-        'cerberus',
-    ],
-    extras_require = {
-        'docker': ['docker'],
-        'test': ['Flask-Testing']
-    },
+    include_package_data=True,
+    setup_requires = setup_requires,
+    tests_require = tests_require,
+    extras_require = extras_require,
     entry_points = {
+        'console_scripts': [
+            'rb-core = rbcore:main'
+        ]
     },
-    cmdclass = {'test': RunTests},
+    cmdclass = {'pytest': PyTests},
 )
