@@ -1,6 +1,6 @@
 import pytest
 
-import rb_backend
+import rbcore
 
 def test_default_routes(client):
     res = client.get('/')

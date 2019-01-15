@@ -4,10 +4,6 @@ from flask import Flask
 from rbcore import channel, database, docker, errors, source
 from rbcore.config import Config
 
-
-__version__ = '0.2.0'
-
-
 def create_app(env=None, local_config_file=None, **config):
     """ Main application entry point """
     Flask.config_class = Config
