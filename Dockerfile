@@ -4,7 +4,7 @@ WORKDIR /usr/src/rb-core
 
 COPY . .
 
-RUN pip install /usr/src/rb-core
+RUN pip install .
 
 VOLUME /usr/src/rb-core /var/run/docker.sock
 EXPOSE 5000

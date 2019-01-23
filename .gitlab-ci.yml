@@ -30,6 +30,7 @@ pytest:
     - name: mongo:latest
       alias: test-db
   variables:
+    FLASK_ENV: "development"
     MONGO_URI: "test-db"
   script:
     - pip install .[test]

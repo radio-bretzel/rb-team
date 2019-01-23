@@ -38,7 +38,8 @@ install_requires = [
     'cerberus',
     'docker',
     'Flask',
-    'Flask-PyMongo'
+    'Flask-PyMongo',
+    'pyyaml'
 ]
 
 tests_require = [
