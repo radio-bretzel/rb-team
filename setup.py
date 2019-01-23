@@ -1,5 +1,3 @@
-"""Packaging settings."""
-
 import sys
 from codecs import open
 from os.path import abspath, dirname, join
@@ -35,16 +33,18 @@ class PyTests(TestCommand):
         sys.exit(errno)
 
 
-setup_requires = [
-    'Flask',
-    'Flask-PyMongo',
+install_requires = [
+    'appdirs',
     'cerberus',
     'docker',
+    'Flask',
+    'Flask-PyMongo'
 ]
 
 tests_require = [
-    'pytest',
-    'Flask-Testing'
+    'Flask-Testing',
+    'pylint',
+    'pytest'
 ]
 
 extras_require = {
@@ -75,12 +75,12 @@ setup(
     keywords = 'webradio, sharing, music, chat, rooms',
     packages = find_packages(exclude=['docs', 'tests*']),
     include_package_data=True,
-    setup_requires = setup_requires,
+    install_requires = install_requires,
     tests_require = tests_require,
     extras_require = extras_require,
     entry_points = {
         'console_scripts': [
-            'rb-core = rbcore:main'
+            'rb-core = rbcore.cli:main'
         ]
     },
     cmdclass = {'pytest': PyTests},
