@@ -16,11 +16,7 @@ def create_app(
     if environment not in ['development', 'test', 'production']:
         raise ConfigurationError("Unknown environment '" + environment + "'")
 
-    if debug:
-        Flask.debug = True
-
     Flask.config_class = config.RBCoreConfig
-    Flask.default_config.update(config.default)
     app = Flask(
         __name__,
         instance_path=instance_path,
