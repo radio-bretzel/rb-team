@@ -88,7 +88,7 @@ _default = {
     'SOURCE_TYPE': 'docker',
     # DockerSource relative configuration
     'SOURCE_CONTAINER_IMAGE': 'registry.radiobretzel.org/sources/rb-src-liquidsoap:latest',
-    'SOURCE_NETWORK': True,
+    'SOURCE_NETWORK': False,
     'SOURCE_NETWORK_NAME': 'sources',
 
     'STREAM_HOST': 'None',
@@ -113,8 +113,6 @@ _test = {
     'MONGO_DBNAME': 'rbcore_test',
 
     'SOURCE_CONTAINER_IMAGE': 'registry.radiobretzel.org/sources/rb-src-liquidsoap:latest',
-
-    'SOURCE_NETWORK': 'tests_sources',
 
     'STREAM_HOST': 'None',
     'STREAM_SOURCE_PASSWD': 'None',

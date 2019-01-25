@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 
 from docker.errors import NotFound as DockerNotFound
 
-from rbcore.config import get_config
+from flask import current_app as app
+
 from rbcore.docker import get_docker_client, get_docker_network
 from rbcore.errors import SourceError, SourceNotFound, DockerError
 from rbcore.source.source.base import BaseSource
@@ -18,13 +19,11 @@ class DockerSource(BaseSource):
         """ DockerSource constructor. Refer to rbcore/channel/source/model.py for arguments.
         """
         super().__init__(name, **kwargs)
-        config = get_config()
-        self._container_name = config['OBJECTS_NAME_PREFIX'] + 'source_' + self.name
+        self._container_name = app.config['OBJECTS_NAME_PREFIX'] + 'source_' + self.name
 
     def create(self, force=False):
         """ Create a source container
         """
-        config = get_config()
         docker_client = get_docker_client()
         if self._get_container(cached=False, quiet=True):
             try:
@@ -33,14 +32,14 @@ class DockerSource(BaseSource):
                 self.delete(force=True)
             except Exception as e:
                 raise SourceError("Couldn't override source : " + str(e))
-        _args = formats.get_prefixed_keys(config, 'SOURCE_CONTAINER_').pop('matching')
+        _args = formats.get_prefixed_keys(app.config, 'SOURCE_CONTAINER_').pop('matching')
         _args.update({
             'name': self._container_name,
             'detach': True,
             'read_only': True,
             'environment': {
-                'STREAM_HOST': config['STREAM_HOST'],
-                'STREAM_SOURCE_PASSWD': config['STREAM_SOURCE_PASSWD'],
+                'STREAM_HOST': app.config['STREAM_HOST'],
+                'STREAM_SOURCE_PASSWD': app.config['STREAM_SOURCE_PASSWD'],
                 'STREAM_MOUNTPOINT': vars(self).get('stream_mountpoint', self.name)
             }
         })
@@ -51,9 +50,9 @@ class DockerSource(BaseSource):
         except Exception as e:
             raise DockerError("Couldn't create source : " + str(e))
         # Handling network connection
-        if config['SOURCE_NETWORK']:
-            network_config = formats.get_prefixed_keys(config, 'SOURCE_NETWORK_')['matching']
-            network_name = config['OBJECTS_NAME_PREFIX'] + network_config.pop('name')
+        if app.config['SOURCE_NETWORK']:
+            network_config = formats.get_prefixed_keys(app.config, 'SOURCE_NETWORK_')['matching']
+            network_name = app.config['OBJECTS_NAME_PREFIX'] + network_config.pop('name')
             source_network = get_docker_network(network_name, **network_config)
             try:
                 source_network.connect(container)
@@ -67,7 +66,6 @@ class DockerSource(BaseSource):
         doesn't exists
         """
         docker_client = get_docker_client()
-        config = get_config()
         if not cached or not self._cached_container_exp > datetime.now(self._cached_container_exp.tzinfo):
             try:
                 self._cached_container = docker_client.containers.get(self._container_name)

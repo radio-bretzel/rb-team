@@ -54,15 +54,15 @@ extras_require = {
 
 
 setup(
-    name = 'Radio Bretzel core',
-    version = '0.2.0',
-    description = 'Radio Bretzel core app. Make your own webradios !',
-    long_description = long_description,
-    url = 'https://source.radiobretzel.org/app/rb-core',
-    author = "Radio Bretzel Org",
-    author_email = "radiobretzel@ntymail.com",
-    license = "None",
-    classifiers = [
+    name='Radio Bretzel core',
+    version='0.2.0',
+    description='Radio Bretzel core app. Make your own webradios !',
+    long_description=long_description,
+    url='https://source.radiobretzel.org/app/rb-core',
+    author="Radio Bretzel Org",
+    author_email="radiobretzel@ntymail.com",
+    license="None",
+    classifiers=[
         'Intended Audience :: System Administrators',
         'Topic :: Music Streaming',
         'Licence :: None (Public domain ?)',
@@ -73,16 +73,16 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
-    keywords = 'webradio, sharing, music, chat, rooms',
-    packages = find_packages(exclude=['docs', 'tests*']),
+    keywords='webradio, sharing, music, chat, rooms',
+    packages=find_packages(exclude=['docs', 'tests*']),
     include_package_data=True,
-    install_requires = install_requires,
-    tests_require = tests_require,
-    extras_require = extras_require,
-    entry_points = {
+    install_requires=install_requires,
+    tests_require=tests_require,
+    extras_require=extras_require,
+    entry_points={
         'console_scripts': [
-            'rb-core = rbcore.cli:main'
+            'rb-core=rbcore.cli:main'
         ]
     },
-    cmdclass = {'pytest': PyTests},
+    cmdclass={'pytest': PyTests},
 )

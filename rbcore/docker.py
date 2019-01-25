@@ -1,13 +1,12 @@
 import docker, time
 
-from rbcore.config import get_config
+from flask import current_app as app
 from rbcore.errors import DockerError
 
 def get_docker_client():
     """ Returns an instance of docker client
     """
-    config = get_config()
-    docker_config = config.get_namespace('DOCKER_')
+    docker_config = app.config.get_namespace('DOCKER_')
     url = docker_config.pop('url')
     version = docker_config.pop('version')
     try:
@@ -23,7 +22,6 @@ def get_docker_network(name, **config):
     """This function returns a docker network depending on configuration given.
     Create the network if not found.
     """
-    config = get_config()
     docker_client = get_docker_client()
     networks = docker_client.networks.list(name)
     if not networks:
