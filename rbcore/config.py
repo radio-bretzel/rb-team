@@ -89,10 +89,10 @@ _default = {
     # DockerSource relative configuration
     'SOURCE_CONTAINER_IMAGE': 'registry.radiobretzel.org/sources/rb-src-liquidsoap:latest',
     'SOURCE_NETWORK': True,
-    'SOURCE_NETWORK_NAME': 'sources'
+    'SOURCE_NETWORK_NAME': 'sources',
 
-    'STREAM_HOST': 'None'
-    'STREAM_SOURCE_PASSWD': 'None'
+    'STREAM_HOST': 'None',
+    'STREAM_SOURCE_PASSWD': 'None',
 }
 
 _development = {
