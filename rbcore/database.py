@@ -31,7 +31,7 @@ def get_database():
                     if not mongo_uri.startswith('mongodb://'):
                         mongo_uri = 'mongodb://' + mongo_uri
         try:
-            mongo = PyMongo(app)
+            mongo = PyMongo(app, uri=mongo_uri)
             app.db = mongo.db
             app.db.command('ping')
         except Exception as e:
