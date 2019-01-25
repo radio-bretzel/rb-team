@@ -49,7 +49,7 @@ class RBCoreConfig(Config):
             for item in config:
                 if item not in self.__locked_config:
                     c = { item.upper(): config[item] }
-                    self.update(item)
+                    self.update(c)
 
 
     def from_yaml(self, filename, silent=False):
