@@ -83,7 +83,7 @@ _default = {
     'DOCKER_VERSION': 'auto',
 
     'MONGO_HOST': 'localhost',
-    'MONGO_DBNAME': 'rbcore',
+    'MONGO_DATABASE': 'rbcore',
 
     'SOURCE_TYPE': 'docker',
     # DockerSource relative configuration
@@ -110,7 +110,7 @@ _test = {
     'OBJECTS_NAME_PREFIX': 'radiobretzel_tests_',
 
     'MONGO_HOST': 'localhost',
-    'MONGO_DBNAME': 'rbcore_test',
+    'MONGO_DATABASE': 'rbcore_test',
 
     'SOURCE_CONTAINER_IMAGE': 'registry.radiobretzel.org/sources/rb-src-liquidsoap:latest',
 

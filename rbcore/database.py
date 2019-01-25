@@ -12,6 +12,24 @@ _models = [
 
 def get_database():
     if not hasattr(app, 'db'):
+        mongo_uri = app.config.get('MONGO_URI')
+        if not mongo_uri:
+            mongo_host = app.config.get('MONGO_HOST', 'localhost')
+            mongo_port = app.config.get('MONGO_PORT', 27017)
+            mongo_user = app.config.get('MONGO_USER')
+            mongo_passwd = app.config.get('MONGO_PASSWD')
+            mongo_database = app.config.get('MONGO_DATABASE', 'rbcore')
+            mongo_uri = 'mongodb://'
+            if mongo_user:
+                mongo_uri += mongo_user
+                if mongo_passwd:
+                    mongo_uri += ':' + mongo_passwd
+                    mongo_uri += '@'
+                    mongo_uri += mongo_host + ':' + mongo_port
+                    mongo_uri += '/' + mongo_database
+                else:
+                    if not mongo_uri.startswith('mongodb://'):
+                        mongo_uri = 'mongodb://' + mongo_uri
         try:
             mongo = PyMongo(app)
             app.db = mongo.db

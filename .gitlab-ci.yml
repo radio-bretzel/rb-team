@@ -31,7 +31,7 @@ pytest:
       alias: test-db
   variables:
     FLASK_ENV: "development"
-    MONGO_URI: "test-db"
+    MONGO_HOST: "test-db"
   script:
     - pip install .[test]
     - python setup.py test
