@@ -2,7 +2,6 @@ from flask import request, abort
 
 from rbcore.source import view
 from rbcore.source.model import Sources
-from rbcore.config import get_config
 from rbcore.errors import DatabaseError, ValidationError, DatabaseNotFound
 
 def routes(app):

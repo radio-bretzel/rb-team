@@ -12,25 +12,28 @@ build:
   stage: build
   script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-    - docker build -t $CI_PROJECT_PATH:$CI_COMMIT_SHA .
+    - docker build -t $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA .
 
 pylint:
   stage: lint
   image: $PYLINT_IMG
+  only:
+    refs:
+      - master
   script:
     - python -m pylint setup.py
     - python -m pylint tests
     - python -m pylint rbcore
-  allow_failure: true
 
 pytest:
   stage: test
-  image: $CI_PROJECT_PATH:$CI_COMMIT_SHA
+  image: $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA
   services:
     - name: mongo:latest
-      alias: test-db
+      alias: "test-db"
   variables:
-    MONGO_URI: "test-db"
+    FLASK_ENV: "development"
+    RBCORE_MONGO_HOST: "test-db"
   script:
     - pip install .[test]
     - python setup.py test
@@ -38,13 +41,27 @@ pytest:
 push:
   stage: release
   when: on_success
+  except:
+    refs:
+      - master
   script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-    - docker tag $CI_PROJECT_PATH:$CI_COMMIT_SHA $CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME
+    - docker tag $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA $CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME
+
+tag_latest:
+  stage: release
+  when: on_success
+  only:
+    refs:
+      - master
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+    - docker tag $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA $CI_REGISTRY/$CI_PROJECT_PATH:latest
+    - docker push $CI_REGISTRY/$CI_PROJECT_PATH:latest
 
 cleanup_fail:
   stage: cleanup
   when: on_failure
   script:
-    - docker image rm -f $CI_PROJECT_PATH:$CI_COMMIT_SHA
+    - docker image rm -f $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA
