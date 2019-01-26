@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from os import path
-from rbcore import create_app
+from . import create_app
 
 parser = ArgumentParser()
 

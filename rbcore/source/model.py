@@ -1,11 +1,11 @@
 from abc import ABCMeta, abstractmethod
 
-from rbcore.config import get_config
-from rbcore.database import Model
-from rbcore.errors import SourceError, ValidationError, DatabaseError, DatabaseNotFound
-from rbcore.source import source as Source
-from rbcore.utils import formats
-from rbcore.utils.validations import validate
+from .config import get_config
+from .database import Model
+from .errors import SourceError, ValidationError, DatabaseError, DatabaseNotFound
+from .source import source as Source
+from .utils import formats
+from .utils.validations import validate
 
 class Sources(Model):
     """ Source's model definition """

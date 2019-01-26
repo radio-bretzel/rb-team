@@ -1,7 +1,7 @@
 from flask import Flask
 from os import path
 
-from rbcore import channel, config, database, docker, errors, source
+from . import channel, config, database, docker, errors, source
 
 def create_app(
         environment='production',

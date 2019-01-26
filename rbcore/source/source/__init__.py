@@ -1,5 +1,5 @@
 from flask import current_app as app
-from rbcore.source.source.docker import DockerSource
+from .source.source.docker import DockerSource
 
 def init(name, type=None, **kwargs):
     """ Factory function called for source creation """

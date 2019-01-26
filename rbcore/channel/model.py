@@ -1,11 +1,11 @@
 from abc import ABCMeta, abstractmethod
 
-from rbcore.database import Model
-from rbcore.errors import DatabaseError, DatabaseNotFound, SourceError, ValidationError
-from rbcore.source.model import Sources
-from rbcore.source import source as Source
-from rbcore.utils import formats
-from rbcore.utils.validations import validate
+from .database import Model
+from .errors import DatabaseError, DatabaseNotFound, SourceError, ValidationError
+from .source.model import Sources
+from .source import source as Source
+from .utils import formats
+from .utils.validations import validate
 
 class Channels(Model):
     """ Channel's model definition """

@@ -1,8 +1,8 @@
 from flask import request, abort
 
-from rbcore.source import view
-from rbcore.source.model import Sources
-from rbcore.errors import DatabaseError, ValidationError, DatabaseNotFound
+from .source import view
+from .source.model import Sources
+from .errors import DatabaseError, ValidationError, DatabaseNotFound
 
 def routes(app):
     """ All routes for source resources"""

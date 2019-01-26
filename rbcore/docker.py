@@ -1,7 +1,7 @@
 import docker, time
 
 from flask import current_app as app
-from rbcore.errors import DockerError
+from .errors import DockerError
 
 def get_docker_client():
     """ Returns an instance of docker client
