@@ -17,11 +17,13 @@ build:
 pylint:
   stage: lint
   image: $PYLINT_IMG
+  only:
+    refs:
+      - master
   script:
     - python -m pylint setup.py
     - python -m pylint tests
     - python -m pylint rbcore
-  allow_failure: true
 
 pytest:
   stage: test
