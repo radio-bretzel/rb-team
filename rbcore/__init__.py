@@ -1,31 +1,34 @@
-import os
+from appdirs import AppDirs
 from flask import Flask
+from os import path
 
-from rbcore import channel, database, docker, errors, source
-from rbcore.config import Config
+from rbcore import channel, config, database, docker, errors, source
 
-def create_app(env=None, local_config_file=None, **config):
+def create_app(
+    environment='production',
+    config_file=None,
+    instance_path=None,
+    debug=False,
+    **kwargs
+):
     """ Main application entry point """
-    Flask.config_class = Config
 
-    app = Flask(__name__)
-    app.config.load(env, local_config_file, **config)
+    if environment not in ['development', 'test', 'production']:
+        raise ConfigurationError("Unknown environment '" + environment + "'")
 
+    Flask.config_class = config.RBCoreConfig
+    app = Flask(
+        __name__,
+        instance_path=instance_path,
+        instance_relative_config=True
+    )
+
+    app.config.load(environment, config_file, **kwargs)
+
+    errors.register_handlers(app)
     register_routes(app)
     register_main_routes(app)
     # register_teardown(app)
-
-    @app.errorhandler(errors.DatabaseNotFound)
-    def not_found(error):
-        return "This page doesn't exist", 404
-
-    @app.errorhandler(errors.ValidationError)
-    def validation_error(error):
-        return str(error), 400
-
-    @app.errorhandler(errors.RadioBretzelException)
-    def default_error(error):
-        return str(error), 500
 
     return app
 

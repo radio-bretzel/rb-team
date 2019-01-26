@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 
-from rbcore.config import get_config
 from rbcore.database import Model
 from rbcore.errors import DatabaseError, DatabaseNotFound, SourceError, ValidationError
 from rbcore.source.model import Sources
@@ -228,7 +227,6 @@ class Channel(object):
     """ Channel object.
     """
     def __init__(self, **kwargs):
-        config = get_config()
         self.slug = kwargs.pop('slug')
         self.active = kwargs.pop('active', True)
         self.deleted = kwargs.pop('deleted', False)
