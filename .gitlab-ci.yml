@@ -1,6 +1,7 @@
 variables:
   PYLINT_IMG: registry.radiobretzel.org/hosting/dockerfile-store/python:pylint
 
+
 stages:
   - build
   - lint
@@ -8,22 +9,37 @@ stages:
   - release
   - cleanup
 
+
 build:
   stage: build
   script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
     - docker build -t $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA .
 
+
 pylint:
+  stage: lint
+  image: $PYLINT_IMG
+  except:
+    refs:
+      - master
+  allow_failure: True
+  script:
+    - python -m pylint rbcore
+    - python -m pylint tests
+    - python -m pylint setup.py
+
+pylint_master:
   stage: lint
   image: $PYLINT_IMG
   only:
     refs:
       - master
   script:
-    - python -m pylint setup.py
-    - python -m pylint tests
     - python -m pylint rbcore
+    - python -m pylint tests
+    - python -m pylint setup.py
+
 
 pytest:
   stage: test
@@ -38,18 +54,19 @@ pytest:
     - pip install .[test]
     - python setup.py test
 
-push:
+
+release:
   stage: release
   when: on_success
-  except:
+  only:
     refs:
-      - master
+      - develop
   script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
     - docker tag $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA $CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME
 
-tag_latest:
+release_latest:
   stage: release
   when: on_success
   only:
@@ -59,6 +76,7 @@ tag_latest:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
     - docker tag $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA $CI_REGISTRY/$CI_PROJECT_PATH:latest
     - docker push $CI_REGISTRY/$CI_PROJECT_PATH:latest
+
 
 cleanup_fail:
   stage: cleanup
