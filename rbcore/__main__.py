@@ -1,3 +1,3 @@
-from .cli import main
+from rbcore.cli import main
 
 main()

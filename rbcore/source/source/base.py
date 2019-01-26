@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
-from .errors import SourceError
+from rbcore.errors import SourceError
 
 class BaseSource(metaclass=ABCMeta):
     """ This astract source will be used to provide generic methods to source classes as a Factory

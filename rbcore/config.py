@@ -4,8 +4,8 @@ import yaml
 from flask import Config
 from flask import current_app as app
 
-from .errors import ConfigurationError, RadioBretzelException
-from .utils.formats import get_prefixed_keys
+from rbcore.errors import ConfigurationError, RadioBretzelException
+from rbcore.utils.formats import get_prefixed_keys
 
 def get_config():
     try:

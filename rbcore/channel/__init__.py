@@ -2,11 +2,11 @@ import random
 
 from flask import request, abort
 
-from .channel.model import Channel, Channels
-from .channel import view
-from .errors import DatabaseError, ValidationError
-from .source import view as source_view
-from .utils import formats, validations
+from rbcore.channel.model import Channel, Channels
+from rbcore.channel import view
+from rbcore.errors import DatabaseError, ValidationError
+from rbcore.source import view as source_view
+from rbcore.utils import formats, validations
 
 def routes(app):
     """ All routes for channel resources"""

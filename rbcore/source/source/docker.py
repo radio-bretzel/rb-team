@@ -4,10 +4,10 @@ from docker.errors import NotFound as DockerNotFound
 
 from flask import current_app as app
 
-from .docker import get_docker_client, get_docker_network
-from .errors import SourceError, SourceNotFound, DockerError
-from .source.source.base import BaseSource
-from .utils import formats
+from rbcore.docker import get_docker_client, get_docker_network
+from rbcore.errors import SourceError, SourceNotFound, DockerError
+from rbcore.source.source.base import BaseSource
+from rbcore.utils import formats
 
 class DockerSource(BaseSource):
     """ DockerSource objects represent liquidsoap containers """
