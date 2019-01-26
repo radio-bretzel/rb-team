@@ -25,7 +25,7 @@ def get_database():
                 if mongo_passwd:
                     mongo_uri += ':' + mongo_passwd
                 mongo_uri += '@'
-            mongo_uri += mongo_host + ':' + mongo_port
+            mongo_uri += mongo_host + ':' + str(mongo_port)
             mongo_uri += '/' + mongo_database
         else:
             if not mongo_uri.startswith('mongodb://'):
