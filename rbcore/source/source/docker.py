@@ -44,7 +44,9 @@ class DockerSource(BaseSource):
             }
         })
         image = _args.pop('image', None)
+        tag = _args.pop('image_tag', 'latest')
         if not image: raise DockerError('no image name given. Check your configuration')
+        image += ':' + tag
         try:
             container = docker_client.containers.create(image=image, **_args)
         except Exception as e:

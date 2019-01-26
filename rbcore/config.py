@@ -87,7 +87,8 @@ _default = {
 
     'SOURCE_TYPE': 'docker',
     # DockerSource relative configuration
-    'SOURCE_CONTAINER_IMAGE': 'registry.radiobretzel.org/sources/rb-src-liquidsoap:latest',
+    'SOURCE_CONTAINER_IMAGE': 'registry.radiobretzel.org/sources/rb-src-liquidsoap',
+    'SOURCE_CONTAINER_IMAGE_TAG': 'latest'
     'SOURCE_NETWORK': False,
     'SOURCE_NETWORK_NAME': 'sources',
 
@@ -100,7 +101,7 @@ _development = {
     'ASSETS_DEBUG': True,
     'WTF_CSRF_ENABLED': False,
 
-    'SOURCE_CONTAINER_IMAGE': 'registry.radiobretzel.org/sources/rb-src-liquidsoap:develop',
+    'SOURCE_CONTAINER_IMAGE_TAG': 'develop',
 }
 
 _test = {
@@ -111,8 +112,6 @@ _test = {
 
     'MONGO_HOST': 'localhost',
     'MONGO_DATABASE': 'rbcore_test',
-
-    'SOURCE_CONTAINER_IMAGE': 'registry.radiobretzel.org/sources/rb-src-liquidsoap:latest',
 
     'STREAM_HOST': 'None',
     'STREAM_SOURCE_PASSWD': 'None',
