@@ -24,12 +24,12 @@ def get_database():
                 mongo_uri += mongo_user
                 if mongo_passwd:
                     mongo_uri += ':' + mongo_passwd
-                    mongo_uri += '@'
-                    mongo_uri += mongo_host + ':' + mongo_port
-                    mongo_uri += '/' + mongo_database
-                else:
-                    if not mongo_uri.startswith('mongodb://'):
-                        mongo_uri = 'mongodb://' + mongo_uri
+                mongo_uri += '@'
+            mongo_uri += mongo_host + ':' + mongo_port
+            mongo_uri += '/' + mongo_database
+        else:
+            if not mongo_uri.startswith('mongodb://'):
+                mongo_uri = 'mongodb://' + mongo_uri
         try:
             mongo = PyMongo(app, uri=mongo_uri)
             app.db = mongo.db
