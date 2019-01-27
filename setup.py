@@ -43,7 +43,6 @@ INSTALL_REQUIREMENTS = [
 ]
 
 TESTS_REQUIREMENTS = [
-    'Flask-Testing',
     'pylint',
     'pytest'
 ]

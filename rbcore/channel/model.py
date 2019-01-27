@@ -11,7 +11,7 @@
 from abc import ABCMeta, abstractmethod
 
 from rbcore.database import Model
-from rbcore.errors import DatabaseError, DatabaseNotFound, SourceError, ValidationError
+from rbcore.errors import DatabaseError, DatabaseNotFound, SourceError
 from rbcore.source.model import Sources
 from rbcore.source import source as Source
 from rbcore.utils import formats
@@ -95,8 +95,8 @@ class Channels(Model):
                 channel_list.append(channel)
         except SourceError:
             raise
-        except Exception as e:
-            raise DatabaseError(str(e))
+        except Exception as err:
+            raise DatabaseError(str(err))
         return channel_list
 
     @classmethod
@@ -139,8 +139,8 @@ class Channels(Model):
                 documents.append(document)
         except SourceError:
             raise
-        except Exception as e:
-            raise DatabaseError(str(e))
+        except Exception as err:
+            raise DatabaseError(str(err))
         try:
             document = documents.pop()
         except:
@@ -157,7 +157,8 @@ class Channels(Model):
         values = validate(values, schema)
         slug = values.get('slug')
         for document in collection.find({'slug': slug}).limit(1):
-            if document: raise ValueError("channel " + str(e) + " already exists.")
+            if document:
+                raise ValueError("channel " + str(err) + " already exists.")
         source_args = values.pop('source', {})
         if not source_args.get('name'):
             source_args['name'] = slug
@@ -167,8 +168,8 @@ class Channels(Model):
         channel = Channel(**values)
         try:
             collection.insert_one(channel.document)
-        except Exception as e:
-            DatabaseError(str(e))
+        except Exception as err:
+            DatabaseError(str(err))
         return channel
 
     @classmethod
@@ -194,8 +195,8 @@ class Channels(Model):
                 {'slug': channel.slug},
                 {'$set': channel.document}
             )
-        except Exception as e:
-            raise DatabaseError(str(e))
+        except Exception as err:
+            raise DatabaseError(str(err))
         return channel
 
     @classmethod
@@ -219,8 +220,8 @@ class Channels(Model):
             try:
                 source_collection.delete_one({'name': channel.source.name})
                 collection.delete_one({'slug': channel.slug})
-            except Exception as e:
-                raise DatabaseError(str(e))
+            except Exception as err:
+                raise DatabaseError(str(err))
         else:
             channel.deleted = True
             try:
@@ -228,8 +229,8 @@ class Channels(Model):
                     {'slug': channel.slug},
                     {'$set': channel.document}
                 )
-            except Exception as e:
-                raise DatabaseError(str(e))
+            except Exception as err:
+                raise DatabaseError(str(err))
         return channel
 
 
@@ -255,8 +256,5 @@ class Channel(object):
     def document(self):
         """ Channel model database schema """
         document = vars(self).copy()
-        try:
-            document['source'] = self.source.name
-        except:
-            document['source'] = None
+        document['source'] = getattr(self.source, 'name', None)
         return document

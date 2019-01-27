@@ -85,7 +85,7 @@ class Model():
 
     @classmethod
     @abc.abstractmethod
-    def find_one(cls, slug, **filters):
+    def find_one(cls, **filters):
         """Returns the first matching document from given filters.
         """
         raise NotImplementedError('Need to implement Model.find_one()')
@@ -93,7 +93,7 @@ class Model():
 
     @classmethod
     @abc.abstractmethod
-    def create(cls, slug, **args):
+    def create(cls, **args):
         """Returns new document from given args.
         """
         raise NotImplementedError('Need to implement Model.create()')
@@ -101,7 +101,7 @@ class Model():
 
     @classmethod
     @abc.abstractmethod
-    def update(cls, slug, values):
+    def update(cls, channel, values):
         """Returns first matching document with given slug, updated with
         given document.
         """
@@ -110,7 +110,7 @@ class Model():
 
     @classmethod
     @abc.abstractmethod
-    def delete(cls, instance):
+    def delete(cls, channel, **opts):
         """ Delete the current document from given collection
         """
         raise NotImplementedError('Need to implement Model.delete()')
