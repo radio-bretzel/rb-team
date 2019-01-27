@@ -1,5 +1,3 @@
-import random
-
 from flask import request, abort
 
 from rbcore.channel.model import Channel, Channels
@@ -8,8 +6,12 @@ from rbcore.errors import DatabaseError, ValidationError
 from rbcore.source import view as source_view
 from rbcore.utils import formats, validations
 
+
 def routes(app):
-    """ All routes for channel resources"""
+    """All routes for channel resources
+
+    This function initialize all routes for the given app
+    """
 
     @app.route('/channel/', methods=['GET'])
     def get_channels():

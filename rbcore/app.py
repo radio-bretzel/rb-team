@@ -1,7 +1,19 @@
-from flask import Flask
-from os import path
+# -*- coding: utf-8 -*-
+"""
+    rbcore.app
+    ~~~~~~~~~~
 
-from rbcore import channel, config, database, docker, errors, source
+    This module implements the central WSGI application object.
+
+    More info in documentation at https://docs.radiobretzel.org
+"""
+
+
+from flask import Flask
+
+from rbcore import config, errors
+from rbcore import channel, source
+
 
 def create_app(
         environment='production',
@@ -9,7 +21,8 @@ def create_app(
         instance_path=None,
         **extra_config
     ):
-    """ Main application entry point """
+    """Main application fabric entry point.
+    """
 
     if environment not in ['development', 'test', 'production']:
         raise errors.ConfigurationError("Unknown environment '" + environment + "'")
@@ -41,6 +54,7 @@ def register_main_routes(app):
     """ Register main routes for application. """
     @app.route('/')
     def hello_world():
+        #pylint: disable=unused-argument
         return 'Welcome to Radio Bretzel'
 
 
