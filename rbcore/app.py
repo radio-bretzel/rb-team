@@ -55,10 +55,10 @@ def register_routes(app):
 def register_main_routes(app):
     """ Register main routes for application. """
     @app.route('/')
+    #pylint: disable=unused-variable
     def hello_world():
-        #pylint: disable=unused-argument
         return 'Welcome to Radio Bretzel'
-
+    #pylint: enable=unused-variable
 
 # def register_teardown(app):
 #     """Register teardowns """

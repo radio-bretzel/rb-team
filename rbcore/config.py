@@ -7,13 +7,12 @@
     More info in documentation at https://docs.radiobretzel.org
 """
 
-import os
+from os import path
 import yaml
 
 from flask import Config
-from flask import current_app as app
 
-from rbcore.errors import ConfigurationError, RadioBretzelException
+from rbcore.errors import ConfigurationError
 from rbcore.utils.formats import get_prefixed_keys
 
 
@@ -101,20 +100,20 @@ class RBCoreConfig(Config):
 
 
     def from_yaml(self, filename, silent=False):
-        if not os.path.isabs(filename):
-            filename = os.os.path.join(self.root_path, filename)
+        """Load configuration from the given YAML filename and add it to the
+        current app configuration.
+        """
+        if not path.isabs(filename):
+            filename = path.join(self.root_path, filename)
         try:
             with open(filename, 'r') as file:
                 yaml_object = yaml.load(file)
-        except yaml.YAMLError as e:
+        except Exception as err:
             if not silent:
-                raise ConfigurationError("Couldn't parse config file : " + str(e))
-        except Exception as e:
-            if not silent:
-                raise e
+                raise ConfigurationError("Couldn't parse config file : " + str(err))
         config = {}
-        for k, v in config.items():
-            key = k.upper()
-            config[key] = v
+        for key, value in yaml_object.items():
+            key_ = key.upper()
+            config[key_] = value
 
         return self.from_mapping(config)

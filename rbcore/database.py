@@ -60,11 +60,11 @@ class Model():
     def get_collection(model):
         """Returns collection object from given model class.
         """
-        db = get_database()
+        database = get_database()
         name = model.__name__.lower()
         if name not in Model.__MODELS:
             raise DatabaseError("Couldn't get collection : Unreferenced model ''" + name + "'")
-        collection = db[name]
+        collection = database[name]
         return collection
 
 

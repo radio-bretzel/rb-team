@@ -54,10 +54,11 @@ def register_handlers(app):
     """This function register the way our application response to HTTP requests
     when an error is raised in the application backend.
     """
-    # pylint: disable=unused-variable
+    # pylint: disable=unused-argument, unused-variable
     @app.errorhandler(DatabaseNotFound)
     def not_found(error):
         return "This page doesn't exists", 404
+    # pylint: enable=unused-argument
 
     @app.errorhandler(ValidationError)
     def validation_error(error):
@@ -66,5 +67,4 @@ def register_handlers(app):
     @app.errorhandler(RadioBretzelException)
     def default_error(error):
         return str(error), 500
-
     # pylint: enable=unused-variable

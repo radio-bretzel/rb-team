@@ -1,3 +1,13 @@
+"""
+    rbcore.channel.model
+    ~~~~~~~~~~~~~~~~~~~~
+
+    This module describes the database representation and operations of the
+    Channel object.
+
+    More info in documentation at https://docs.radiobretzel.org
+"""
+
 from abc import ABCMeta, abstractmethod
 
 from rbcore.database import Model
@@ -12,41 +22,41 @@ class Channels(Model):
     __metaclass__ = ABCMeta
 
     _schema = {
-            'slug': {
-                'required': True,
-                'validator': 'slug',
-            },
-            'name': {
-                'type': 'string',
-                'coerce': 'text'
-            },
-            'active': {
-                'validator': 'boolean',
-                'coerce': 'boolean',
-                'default': True
-            },
-            'deleted': {
-                'validator': 'boolean',
-                'coerce': 'boolean',
-                'default': False
-            },
-            'description': {
-                'type': 'string',
-                'coerce': 'text'
-            },
-            'source': {
-                'oneof': [
-                    {
-                        'validator': 'slug',
-                        'nullable': True
-                    },
-                    {
-                        'type': 'dict',
-                        'schema': Sources._schema
-                    }
-                ]
-            }
+        'slug': {
+            'required': True,
+            'validator': 'slug',
+        },
+        'name': {
+            'type': 'string',
+            'coerce': 'text'
+        },
+        'active': {
+            'validator': 'boolean',
+            'coerce': 'boolean',
+            'default': True
+        },
+        'deleted': {
+            'validator': 'boolean',
+            'coerce': 'boolean',
+            'default': False
+        },
+        'description': {
+            'type': 'string',
+            'coerce': 'text'
+        },
+        'source': {
+            'oneof': [
+                {
+                    'validator': 'slug',
+                    'nullable': True
+                },
+                {
+                    'type': 'dict',
+                    'schema': Sources._schema
+                }
+            ]
         }
+    }
 
     @classmethod
     @abstractmethod
@@ -231,7 +241,10 @@ class Channel(object):
         self.active = kwargs.pop('active', True)
         self.deleted = kwargs.pop('deleted', False)
         self.name = kwargs.pop('name', formats.id_to_name(self.slug))
-        self.description = kwargs.pop('description', "Welcome to " + self.name + " Radio Bretzel Channel")
+        self.description = kwargs.pop(
+            'description',
+            "Welcome to " + self.name + " Radio Bretzel Channel"
+        )
         source = kwargs.pop('source', None)
         if isinstance(source, dict):
             self.source = Source.init(**source)
