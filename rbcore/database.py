@@ -62,7 +62,7 @@ class Model():
         """
         db = get_database()
         name = model.__name__.lower()
-        if name not in __MODELS:
+        if name not in Model.__MODELS:
             raise DatabaseError("Couldn't get collection : Unreferenced model ''" + name + "'")
         collection = db[name]
         return collection
