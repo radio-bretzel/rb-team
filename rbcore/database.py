@@ -15,12 +15,6 @@ from flask_pymongo import PyMongo
 from rbcore.errors import DatabaseError
 
 
-__MODELS = [
-    'channels',
-    'sources',
-]
-
-
 def get_database():
     """Returns the current database connection or create it if doesn't exist.
     """
@@ -53,12 +47,19 @@ def get_database():
 
 
 class Model():
-    """ Abstract class whose different models will inherit """
+    """Abstract class whose different models will inherit.
+    """
     __metaclass__ = abc.ABCMeta
+
+    __MODELS = [
+        'channels',
+        'sources',
+    ]
 
     @staticmethod
     def get_collection(model):
-        """ Returns collection object from given model class"""
+        """Returns collection object from given model class.
+        """
         db = get_database()
         name = model.__name__.lower()
         if name not in __MODELS:
@@ -69,7 +70,7 @@ class Model():
 
     @staticmethod
     def _schema():
-        """ Returns a tuple of valids and invalids arguments
+        """Returns a tuple of valids and invalids arguments.
         """
         raise NotImplementedError('Need to implement Model._schema()')
 
@@ -77,7 +78,7 @@ class Model():
     @classmethod
     @abc.abstractmethod
     def find(cls, **filters):
-        """ Returns multiple matching documents from given filters
+        """Returns multiple matching documents from given filters.
         """
         raise NotImplementedError('Need to implement Model.find()')
 
@@ -85,7 +86,7 @@ class Model():
     @classmethod
     @abc.abstractmethod
     def find_one(cls, slug, **filters):
-        """ Returns the first matching document from given filters
+        """Returns the first matching document from given filters.
         """
         raise NotImplementedError('Need to implement Model.find_one()')
 
@@ -93,7 +94,7 @@ class Model():
     @classmethod
     @abc.abstractmethod
     def create(cls, slug, **args):
-        """ Returns new document from given args
+        """Returns new document from given args.
         """
         raise NotImplementedError('Need to implement Model.create()')
 
@@ -101,8 +102,8 @@ class Model():
     @classmethod
     @abc.abstractmethod
     def update(cls, slug, values):
-        """ Returns first matching document with given slug, updated with
-        given document
+        """Returns first matching document with given slug, updated with
+        given document.
         """
         raise NotImplementedError('Need to implement Model.update()')
 
