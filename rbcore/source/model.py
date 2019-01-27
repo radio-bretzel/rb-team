@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 
-from rbcore.config import get_config
 from rbcore.database import Model
 from rbcore.errors import SourceError, ValidationError, DatabaseError, DatabaseNotFound
 from rbcore.source import source as Source
