@@ -4,14 +4,36 @@ from os.path import abspath, dirname, join
 from subprocess import call
 
 from setuptools import find_packages, setup
+from setuptools.command.test import test as TestCommand
+
 
 this_dir = abspath(dirname(__file__))
 with open(join(this_dir, 'README.md'), encoding='utf-8') as file:
     long_description = file.read()
 
 
+class PyTests(TestCommand):
+    """Run all tests."""
+    description = 'run tests'
+    user_options = [("pytest-args=", "a", "Arguments to pass to pytest")]
 
-INSTALL_REQUIREMENTS = [
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = ""
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        import shlex
+        # import here, cause outside the eggs aren't loaded
+        import pytest
+
+        errno = pytest.main(shlex.split(self.pytest_args))
+        sys.exit(errno)
+
+
+install_requires = [
     'appdirs',
     'cerberus',
     'docker',
@@ -20,20 +42,20 @@ INSTALL_REQUIREMENTS = [
     'pyyaml'
 ]
 
-TEST_REQUIREMENTS = [
+tests_require = [
     'Flask-Testing',
     'pylint',
     'pytest'
 ]
 
-EXTRA_REQUIREMENTS = {
-    'test': TEST_REQUIREMENTS
+extras_require = {
+    'test': tests_require
 }
 
 
 setup(
     name='Radio Bretzel core',
-    version='0.3.0',
+    version='0.2.0',
     description='Radio Bretzel core app. Make your own webradios !',
     long_description=long_description,
     url='https://source.radiobretzel.org/app/rb-core',
@@ -54,12 +76,13 @@ setup(
     keywords='webradio, sharing, music, chat, rooms',
     packages=find_packages(exclude=['docs', 'tests*']),
     include_package_data=True,
-    install_requires=INSTALL_REQUIREMENTS,
-    tests_require=TEST_REQUIREMENTS,
-    extras_require=EXTRA_REQUIREMENTS,
+    install_requires=install_requires,
+    tests_require=tests_require,
+    extras_require=extras_require,
     entry_points={
         'console_scripts': [
             'rb-core=rbcore.cli:main'
         ]
     },
+    cmdclass={'pytest': PyTests},
 )
