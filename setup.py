@@ -42,14 +42,14 @@ install_requires = [
     'pyyaml'
 ]
 
-tests_require = [
+TESTS_REQUIREMENTS = [
     'Flask-Testing',
     'pylint',
     'pytest'
 ]
 
-extras_require = {
-    'test': tests_require
+EXTRA_REQUIREMENTS = {
+    'test': TESTS_REQUIREMENTS,
 }
 
 
@@ -76,9 +76,9 @@ setup(
     keywords='webradio, sharing, music, chat, rooms',
     packages=find_packages(exclude=['docs', 'tests*']),
     include_package_data=True,
-    install_requires=install_requires,
-    tests_require=tests_require,
-    extras_require=extras_require,
+    install_requires=INSTALL_REQUIREMENTS,
+    tests_require=TESTS_REQUIREMENTS,
+    extras_require=EXTRA_REQUIREMENTS,
     entry_points={
         'console_scripts': [
             'rb-core=rbcore.cli:main'
