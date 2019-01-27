@@ -33,7 +33,7 @@ class PyTests(TestCommand):
         sys.exit(errno)
 
 
-install_requires = [
+INSTALL_REQUIREMENTS = [
     'appdirs',
     'cerberus',
     'docker',
