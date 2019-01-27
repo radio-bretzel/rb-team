@@ -38,7 +38,7 @@ def test_source_model(app):
         test_source_models = rbcore.source.model.Sources.find()
         assert test_source_models == []
         test_source_model = rbcore.source.model.Sources.create(**{'name': 'test-source-model', 'channel': 'dumb'})
-        assert test_source_model._document == {
+        assert test_source_model.document == {
             'name': 'test-source-model',
             'channel': 'dumb',
             'status': 'stopped',

@@ -156,7 +156,7 @@ class Channels(Model):
             values['source'] = Sources.create(**source_args)
         channel = Channel(**values)
         try:
-            collection.insert_one(channel._document)
+            collection.insert_one(channel.document)
         except Exception as e:
             DatabaseError(str(e))
         return channel
@@ -182,7 +182,7 @@ class Channels(Model):
         try:
             collection.update_one(
                 {'slug': channel.slug},
-                {'$set': channel._document}
+                {'$set': channel.document}
             )
         except Exception as e:
             raise DatabaseError(str(e))
@@ -216,7 +216,7 @@ class Channels(Model):
             try:
                 collection.update_one(
                     {'slug': channel.slug},
-                    {'$set': channel._document}
+                    {'$set': channel.document}
                 )
             except Exception as e:
                 raise DatabaseError(str(e))
@@ -239,7 +239,7 @@ class Channel(object):
             self.source = source
 
     @property
-    def _document(self):
+    def document(self):
         """ Channel model database schema """
         document = vars(self).copy()
         try:

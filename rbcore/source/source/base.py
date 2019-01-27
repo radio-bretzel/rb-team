@@ -26,7 +26,7 @@ class BaseSource(metaclass=ABCMeta):
         return self
 
     @property
-    def _document(self):
+    def document(self):
         """ This function generates source's document """
         return {
             'name': self.name,

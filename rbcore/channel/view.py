@@ -12,7 +12,7 @@ from flask import jsonify
 def infos(channel):
     """Returns given channel informations as json.
     """
-    info = channel._document
+    info = channel.document
     info['source'] = {
         'name': channel.source.name,
         'status': channel.source.status

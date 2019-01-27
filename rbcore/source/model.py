@@ -86,7 +86,7 @@ class Sources(Model):
         source = Source.init(name, **values)
         source.create()
         try:
-            collection.insert_one(source._document)
+            collection.insert_one(source.document)
         except Exception as e:
             DatabaseError(str(e))
         return source
@@ -111,7 +111,7 @@ class Sources(Model):
         try:
             collection.update_one(
                 {'name': source.name},
-                {'$set': source._document}
+                {'$set': source.document}
             )
         except Exception as e:
             raise DatabaseError(str(e))
