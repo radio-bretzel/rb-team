@@ -1,16 +1,29 @@
+"""
+    rbcore.database
+    ~~~~~~~~~~~~~~~
+
+    This module handles database operations and the core data model.
+
+    More info in documentation at https://docs.radiobretzel.org
+"""
+
 import abc
+
 from flask import current_app as app
 from flask_pymongo import PyMongo
+
 from rbcore.errors import DatabaseError
 
 
-_models = [
+__MODELS = [
     'channels',
     'sources',
 ]
 
 
 def get_database():
+    """Returns the current database connection or create it if doesn't exist.
+    """
     if not hasattr(app, 'db'):
         mongo_uri = app.config.get('MONGO_URI')
         if not mongo_uri:
@@ -32,14 +45,14 @@ def get_database():
                 mongo_uri = 'mongodb://' + mongo_uri
         try:
             mongo = PyMongo(app, uri=mongo_uri)
-            app.db = mongo.db
-            app.db.command('ping')
-        except Exception as e:
-            raise DatabaseError("Couldn't initiate database connection : " + str(e))
-    return app.db
+            app.mongo = mongo.db
+            app.mongo.command('ping')
+        except Exception as err:
+            raise DatabaseError("Couldn't initiate database connection : " + str(err))
+    return app.mongo
 
 
-class Model(object):
+class Model():
     """ Abstract class whose different models will inherit """
     __metaclass__ = abc.ABCMeta
 
@@ -48,11 +61,10 @@ class Model(object):
         """ Returns collection object from given model class"""
         db = get_database()
         name = model.__name__.lower()
-        if name in _models:
-            collection = db[name]
-            return collection
-        else:
+        if name not in __MODELS:
             raise DatabaseError("Couldn't get collection : Unreferenced model ''" + name + "'")
+        collection = db[name]
+        return collection
 
 
     @staticmethod

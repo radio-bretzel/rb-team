@@ -17,18 +17,6 @@ build:
     - docker build -t $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA .
 
 
-# pylint:
-#   stage: lint
-#   image: $PYLINT_IMG
-#   except:
-#     refs:
-#       - master
-#   allow_failure: True
-#   script:
-#     - python -m pylint rbcore
-#     - python -m pylint tests
-#     - python -m pylint setup.py
-
 pylint_master:
   stage: lint
   image: $PYLINT_IMG

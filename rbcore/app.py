@@ -34,7 +34,9 @@ def create_app(
         instance_relative_config=True
     )
 
+    # pylint: disable=no-member
     app.config.load(environment, config_file, **extra_config)
+    # pylint: enable=no-member
 
     errors.register_handlers(app)
     register_routes(app)
