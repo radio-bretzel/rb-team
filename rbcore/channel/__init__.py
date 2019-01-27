@@ -22,71 +22,56 @@ def routes(app):
 
     This function initialize all routes for the given app
     """
-    # pylint: disable=unused-variable
+
     @app.route('/channel/', methods=['GET'])
-    def get_channels():
-        # pylint: enable=unused-variable
+    def get_channels(): # pylint: disable=unused-variable
         values = request.args.to_dict()
         channels = Channels.find(**values)
         return view.many(*channels)
 
-    # pylint: disable=unused-variable
     @app.route('/channel/<string:slug>', methods=['GET'])
-    def get_channel(slug):
-        # pylint: enable=unused-variable
+    def get_channel(slug):  # pylint: disable=unused-variable
         values = request.args.to_dict()
         values.update({'slug': slug})
         channel = Channels.find_one(**values)
         return view.one(channel)
 
-    # pylint: disable=unused-variable
     @app.route('/channel/<string:slug>', methods=['POST'])
-    def create_channel(slug):
-        # pylint: enable=unused-variable
+    def create_channel(slug):   # pylint: disable=unused-variable
         values = request.form.to_dict()
         values.update({'slug': slug})
         channel = Channels.create(**values)
         return view.one(channel)
 
-    # pylint: disable=unused-variable
     @app.route('/channel/<string:slug>', methods=['PUT', 'UPDATE'])
-    def update_channel(slug):
-        # pylint: enable=unused-variable
+    def update_channel(slug):   # pylint: disable=unused-variable
         values = request.form.to_dict()
         updated_channel = Channels.update(slug, values)
-        return view.one(update_channel)
+        return view.one(updated_channel)
 
-    # pylint: disable=unused-variable
     @app.route('/channel/<string:slug>', methods=['DELETE'])
-    def delete_channel(slug):
-        # pylint: enable=unused-variable
+    def delete_channel(slug):   # pylint: disable=unused-variable
         values = request.form.to_dict()
         deleted_channel = Channels.delete(slug, **values)
         return view.one(deleted_channel)
 
-    # pylint: disable=unused-variable
     @app.route('/channel/<string:slug>/source', methods=['GET'])
-    def get_channel_source(slug):
-        # pylint: enable=unused-variable
+    def get_channel_source(slug):   # pylint: disable=unused-variable
         values = request.form.to_dict()
         values.update({'slug': slug})
         channel = Channels.find_one(**values)
         return source_view.one(channel.source)
 
-    # pylint: disable=unused-variable
     @app.route('/channel/<string:slug>/source/start')
-    def start_channel_source(slug):
-        # pylint: enable=unused-variable
+    def start_channel_source(slug): # pylint: disable=unused-variable
         values = request.form.to_dict()
         values.update({'slug': slug})
         channel = Channels.find_one(**values)
         channel.source.start()
         return source_view.one(channel.source)
 
-    # pylint: disable=unused-variable
     @app.route('/channel/<string:slug>/source/stop')
-    def stop_channel_source(slug):
-        # pylint: enable=unused-variable
+    def stop_channel_source(slug):  # pylint: disable=unused-variable
         values = request.form.to_dict()
         values.update({'slug': slug})
         channel = Channels.find_one(**values)

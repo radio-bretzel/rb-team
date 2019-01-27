@@ -7,7 +7,7 @@
     More info in documentation at https://docs.radiobretzel.org
 """
 
-from os import path
+import os
 import yaml
 
 from flask import Config
@@ -103,8 +103,8 @@ class RBCoreConfig(Config):
         """Load configuration from the given YAML filename and add it to the
         current app configuration.
         """
-        if not path.isabs(filename):
-            filename = path.join(self.root_path, filename)
+        if not os.path.isabs(filename):
+            filename = os.path.join(self.root_path, filename)
         try:
             with open(filename, 'r') as file:
                 yaml_object = yaml.load(file)
