@@ -69,10 +69,10 @@ class Model():
 
 
     @staticmethod
-    def _schema():
+    def schema():
         """Returns a tuple of valids and invalids arguments.
         """
-        raise NotImplementedError('Need to implement Model._schema()')
+        raise NotImplementedError('Need to implement Model.schema()')
 
 
     @classmethod

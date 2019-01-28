@@ -21,7 +21,7 @@ class Channels(Model):
     """ Channel's model definition """
     __metaclass__ = ABCMeta
 
-    _schema = {
+    schema = {
         'slug': {
             'required': True,
             'validator': 'slug',
@@ -52,7 +52,7 @@ class Channels(Model):
                 },
                 {
                     'type': 'dict',
-                    'schema': Sources._schema
+                    'schema': Sources.schema
                 }
             ]
         }
@@ -64,7 +64,7 @@ class Channels(Model):
         """ Returns all matching channels from given filters
         """
         collection = Model.get_collection(cls)
-        schema = Channels._schema.copy()
+        schema = Channels.schema.copy()
         filters = validate(filters, schema, mandatories=False)
         if not filters.pop('active'):
             filters['active'] = True
@@ -105,7 +105,7 @@ class Channels(Model):
         """ Returns the first matching channel from given name
         """
         collection = Model.get_collection(cls)
-        schema = Channels._schema.copy()
+        schema = Channels.schema.copy()
         filters = validate(filters, schema, mandatories=False)
         if not filters.pop('active'):
             filters['active'] = True
@@ -153,7 +153,7 @@ class Channels(Model):
         """ Returns the created channel from given arguments
         """
         collection = Model.get_collection(cls)
-        schema = Channels._schema.copy()
+        schema = Channels.schema.copy()
         values = validate(values, schema)
         slug = values.get('slug')
         for document in collection.find({'slug': slug}).limit(1):
@@ -181,7 +181,7 @@ class Channels(Model):
         collection = Model.get_collection(cls)
         if isinstance(channel, str):
             channel = Channels.find_one(**{'slug': channel})
-        schema = Channels._schema.copy()
+        schema = Channels.schema.copy()
         formats.pop_keys(schema, 'source')
         values = validate(values, schema, mandatories=False)
         vars(channel).update(values)

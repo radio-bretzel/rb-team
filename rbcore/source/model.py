@@ -10,7 +10,7 @@ class Sources(Model):
     """ Source's model definition """
     __metaclass__ = ABCMeta
 
-    _schema = {
+    schema = {
             'name': {
                 'required': True,
                 'validator': 'slug'
@@ -33,7 +33,7 @@ class Sources(Model):
         """ Returns multiple matching documents from given filters
         """
         collection = Model.get_collection(cls)
-        schema = Sources._schema.copy()
+        schema = Sources.schema.copy()
         filters = validate(filters, schema, mandatories=False)
         source_list = []
         try:
@@ -54,7 +54,7 @@ class Sources(Model):
         """ Returns the first matching document from given filters
         """
         collection = Model.get_collection(cls)
-        schema = Sources._schema.copy()
+        schema = Sources.schema.copy()
         filters = validate(filters, schema, mandatories=False)
         if not filters: raise ValidationError('You must provide at least one filter')
         documents = []
@@ -76,7 +76,7 @@ class Sources(Model):
         """ Returns new document from given args
         """
         collection = Model.get_collection(cls)
-        schema = Sources._schema.copy()
+        schema = Sources.schema.copy()
         values = validate(kwargs, schema)
         name = values.pop('name')
         values['status'] = values.get('status', 'stopped')
@@ -98,7 +98,7 @@ class Sources(Model):
         collection = Model.get_collection(cls)
         if isinstance(source, str):
             source = Sources.find_one(**{'name': source})
-        schema = Sources._schema.copy()
+        schema = Sources.schema.copy()
         formats.pop_keys(schema, 'name', 'channel', 'status')
         values = validate(values, schema, mandatories=False)
         vars(source).update(values)
