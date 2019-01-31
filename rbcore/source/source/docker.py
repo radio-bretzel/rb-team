@@ -1,3 +1,13 @@
+"""
+    rbcore.source.source.docker
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    This module is an implementation of the rbcore.source Model for sources
+    run with docker.
+
+    More info in documentation at https://docs.radiobretzel.org
+"""
+
 from datetime import datetime, timedelta
 
 from docker.errors import NotFound as DockerNotFound
@@ -10,25 +20,27 @@ from rbcore.source.source.base import BaseSource
 from rbcore.utils import formats
 
 class DockerSource(BaseSource):
-    """ DockerSource objects represent liquidsoap containers """
+    """DockerSource objects represent liquidsoap containers
+    """
 
     _cached_container = None
     _cached_container_exp = datetime.min
 
     def __init__(self, name, **kwargs):
-        """ DockerSource constructor. Refer to rbcore/channel/source/model.py for arguments.
+        """DockerSource constructor. Refer to rbcore.source.model for arguments.
         """
         super().__init__(name, **kwargs)
         self._container_name = app.config['OBJECTS_NAME_PREFIX'] + 'source_' + self.name
 
     def create(self, force=False):
-        """ Create a source container
+        """Create a source container
         """
         docker_client = get_docker_client()
         if self._get_container(cached=False, quiet=True):
             try:
                 if not force:
-                    raise SourceError("container '" + self._container_name + "' already exists. Use force arg to override")
+                    raise SourceError("container '" + self._container_name +
+                        "' already exists. Use force arg to override")
                 self.delete(force=True)
             except Exception as e:
                 raise SourceError("Couldn't override source : " + str(e))
@@ -45,7 +57,8 @@ class DockerSource(BaseSource):
         })
         image = _args.pop('image', None)
         tag = _args.pop('image_tag', 'latest')
-        if not image: raise DockerError('no image name given. Check your configuration')
+        if not image:
+            raise DockerError('no image name given. Check your configuration')
         image += ':' + tag
         try:
             container = docker_client.containers.create(image=image, **_args)

@@ -101,7 +101,7 @@ class Model():
 
     @classmethod
     @abc.abstractmethod
-    def update(cls, channel, values):
+    def update(cls, slug, values):
         """Returns first matching document with given slug, updated with
         given document.
         """
@@ -110,7 +110,7 @@ class Model():
 
     @classmethod
     @abc.abstractmethod
-    def delete(cls, channel, force='False', **opts):
+    def delete(cls, slug, force='False', **opts):
         """ Delete the current document from given collection
         """
         raise NotImplementedError('Need to implement Model.delete()')

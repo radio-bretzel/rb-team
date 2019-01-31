@@ -1,3 +1,12 @@
+"""
+    rbcore.source.model
+    ~~~~~~~~~~~~~~~~~~~
+
+    This module handles every database operation for Radio Bretzel sources.
+
+    More info in documentation at https://docs.radiobretzel.org
+"""
+
 from abc import ABCMeta, abstractmethod
 
 from rbcore.database import Model
@@ -56,7 +65,8 @@ class Sources(Model):
         collection = Model.get_collection(cls)
         schema = Sources.schema.copy()
         filters = validate(filters, schema, mandatories=False)
-        if not filters: raise ValidationError('You must provide at least one filter')
+        if not filters:
+            raise ValidationError('You must provide at least one filter')
         documents = []
         try:
             for document in collection.find(filters).limit(1):
@@ -81,7 +91,8 @@ class Sources(Model):
         name = values.pop('name')
         values['status'] = values.get('status', 'stopped')
         for document in collection.find({'name': name}).limit(1):
-            if document: raise ValueError("source '" + str(name) + "' already exists.")
+            if document:
+                raise ValueError("source '" + str(name) + "' already exists.")
         source = Source.init(name, **values)
         source.create()
         try:
