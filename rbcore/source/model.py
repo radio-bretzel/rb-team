@@ -92,7 +92,7 @@ class Sources(Model):
 
     @classmethod
     @abstractmethod
-    def update(cls, source, **values):
+    def update(cls, source, values):
         """ Update given source with given values. Source.init can be source object or source name
         """
         collection = Model.get_collection(cls)
@@ -118,7 +118,7 @@ class Sources(Model):
 
     @classmethod
     @abstractmethod
-    def delete(cls, source, force='false'):
+    def delete(cls, source, force='False', **opts):
         """ Delete the current document from given collection
         """
         collection = Model.get_collection(cls)

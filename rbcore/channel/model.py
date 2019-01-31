@@ -158,7 +158,7 @@ class Channels(Model):
         slug = values.get('slug')
         for document in collection.find({'slug': slug}).limit(1):
             if document:
-                raise ValueError("channel " + str(channel) + " already exists.")
+                raise ValueError("channel " + str(slug) + " already exists.")
         source_args = values.pop('source', {})
         if not source_args.get('name'):
             source_args['name'] = slug
@@ -201,7 +201,7 @@ class Channels(Model):
 
     @classmethod
     @abstractmethod
-    def delete(cls, channel, **opts):
+    def delete(cls, channel, force='False', **opts):
         collection = Model.get_collection(cls)
         source_collection = Model.get_collection(Sources)
         schema = {

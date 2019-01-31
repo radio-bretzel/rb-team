@@ -110,7 +110,7 @@ class Model():
 
     @classmethod
     @abc.abstractmethod
-    def delete(cls, channel, **opts):
+    def delete(cls, channel, force='False', **opts):
         """ Delete the current document from given collection
         """
         raise NotImplementedError('Need to implement Model.delete()')
