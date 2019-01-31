@@ -11,21 +11,21 @@ class Sources(Model):
     __metaclass__ = ABCMeta
 
     schema = {
-            'name': {
-                'required': True,
-                'validator': 'slug'
-            },
-            'channel': {
-                'required': True,
-                'validator': 'slug'
-            },
-            'status': {
-                'allowed': ['playing', 'stopped', 'non-existent', 'in error']
-            },
-            'stream_mountpoint': {
-                'validator': 'slug'
-            }
+        'name': {
+            'required': True,
+            'validator': 'slug'
+        },
+        'channel': {
+            'required': True,
+            'validator': 'slug'
+        },
+        'status': {
+            'allowed': ['playing', 'stopped', 'non-existent', 'in error']
+        },
+        'stream_mountpoint': {
+            'validator': 'slug'
         }
+    }
 
     @classmethod
     @abstractmethod
@@ -43,8 +43,8 @@ class Sources(Model):
                 source_list.append(source)
         except SourceError:
             raise
-        except Exception as e:
-            raise DatabaseError(str(e))
+        except Exception as err:
+            raise DatabaseError(str(err))
         return source_list
 
 
@@ -61,8 +61,8 @@ class Sources(Model):
         try:
             for document in collection.find(filters).limit(1):
                 documents.append(document)
-        except Exception as e:
-            raise DatabaseError(str(e))
+        except Exception as err:
+            raise DatabaseError(str(err))
         if not documents:
             raise DatabaseNotFound()
         document = documents.pop()
@@ -86,8 +86,8 @@ class Sources(Model):
         source.create()
         try:
             collection.insert_one(source.document)
-        except Exception as e:
-            DatabaseError(str(e))
+        except Exception as err:
+            DatabaseError(str(err))
         return source
 
     @classmethod
@@ -112,8 +112,8 @@ class Sources(Model):
                 {'name': source.name},
                 {'$set': source.document}
             )
-        except Exception as e:
-            raise DatabaseError(str(e))
+        except Exception as err:
+            raise DatabaseError(str(err))
         return source
 
     @classmethod
@@ -134,6 +134,6 @@ class Sources(Model):
         source.delete(force=force)
         try:
             collection.delete_one({'name': source.name})
-        except:
-            raise DatabaseError(str(e))
+        except Exception as err:
+            raise DatabaseError(str(err))
         return source
