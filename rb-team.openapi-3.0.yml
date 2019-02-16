@@ -1,0 +1,1056 @@
+openapi: "3.0.0"
+info:
+  description: "Radio Bretzel Team API reference."
+  version: "0.2.0"
+  title: "rb-team"
+  contact:
+    email: "radiobretzel@ntymail.com"
+  license:
+    name: "GPL-3.0"
+    url: "https://www.gnu.org/licenses/gpl-3.0.html"
+
+
+tags:
+  - name: General
+  - name: Channels
+    description: Channels are rooms to chat and listen to music with friends !
+  - name: Sources
+    description: Sources are process creating the audio that will be streamed
+  - name: Admin
+    description: Restricted admin area
+
+
+
+
+paths:
+
+  /:
+    summary: Instance information
+
+    get:
+      summary: Returns information about instance
+      description: >
+        Returns basic information about the instance.
+      operationId: getInfos
+      tags:
+        - General
+
+      security:
+        - rbadminUsers:
+          - member
+
+      responses:
+        '200':
+          description: >
+            Instance main information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    description: Application current version
+                    type: string
+                  team:
+                    description: Team name
+                    type: string
+                  contact:
+                    description: Contact email address
+                    type: string
+                    format: email
+                  members:
+                    description: Current number of users
+                    type: integer
+                    minimum: 1
+                  channels:
+                    description: Current number of channels
+                    type: integer
+                    minimum: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /channels:
+    summary: List channels objects
+
+    get:
+      summary: Return a list of all channels matching the given filters
+      description: >
+        Returns a list of channels from the given filters. If user is chief,
+        it would obtain complete information about channels. If user is only a
+        member, it would obtain some reduced information. See parameters for
+        more details
+      operationId: getChannels
+      tags:
+        - Channels
+
+      security:
+        - rbadminUsers:
+          - member
+
+      parameters:
+        - in: query
+          name: 'slug'
+          description: >
+            Filter channels by slug. This slug must be alphanumeric and lowercase
+            only. It can contain but can't start nor end with one or two max
+            dashes (-). Prefer HTTP GET `/channel/{slug}`
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+            pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+        - $ref: '#/components/parameters/ChannelNameQuery'
+        - $ref: '#/components/parameters/ChannelArchivedQuery'
+
+      responses:
+        '200':
+          description: List of all channels of the team from the given filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Channel'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /channel/{slug}:
+    summary: Handles a channel
+
+    get:
+      summary: Return the channel object corresponding to the given slug
+      description: >
+        Return the channel object corresponding to the given slug. If user is chief,
+        it would obtain complete information about channels. If user is only a member, it
+        would obtain some reduced information. See parameters for more details
+      operationId: getChannelBySlug
+      tags:
+        - Channels
+
+      security:
+        - rbadminUsers:
+          - member
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+
+      responses:
+        '200':
+          description: Channel object corresponding to the given slug
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    post:
+      summary: Create a new channel
+      description: >
+        Create a new channel with the given arguments. If no name is given, slug
+        will be used by default. Slug must be unique, and passing an already
+        existing slug as an argument will result by a `409 - Conflict` HTTP response.
+      tags:
+        - Channels
+
+      security:
+        - rbadminUsers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+        - $ref: '#/components/parameters/ChannelNameQuery'
+        - $ref: '#/components/parameters/ChannelDescriptionQuery'
+        - $ref: '#/components/parameters/ChannelArchivedQuery'
+
+      responses:
+        '201':
+          description: "Channel was successfully created"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    put:
+      summary: Update an existing channel information
+      description: >
+        Update an existing channel information from the given args, and return
+        the updated channel object.
+      operationId: updateChannel
+      tags:
+        - Channels
+
+      security:
+        - rbadminUsers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+        - in: query
+          name: 'fields'
+          description: >
+            An object representing fields to update on the given channel
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                maxLength: 128
+              description:
+                type: string
+                maxLength: 4096
+
+      responses:
+        '200':
+          description: Updated channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    delete:
+      summary: Archive or delete the channel object corresponding to the given slug
+      description: >
+        Archive or delete the channel object corresponding to the given slug.
+        Calling this route on a archived channel will result by a 404 error,
+        unless the argument `force` is set to true.
+      operationId: deleteChannel
+      tags:
+        - Channels
+
+      security:
+        - rbadminUsers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+        - in: query
+          name: 'force'
+          description: >
+            If set to true, the channel will be definively deleted. Otherwise,
+            channel will be archived. Trying to delete an archived channel
+            without setting this argument to true will result by a 404 error
+          schema:
+            type: boolean
+            default: true
+
+      responses:
+        '200':
+          description: Deleted channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /sources:
+    summary: List sources objects
+
+    get:
+      summary: Return a list of all sources matching the given filters
+      description: >
+        Returns a list of sources from the given filters.
+      operationId: getSources
+      tags:
+        - Sources
+
+      security:
+        - rbadminUsers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/SourceTypeQuery'
+        - $ref: '#/components/parameters/SourceStatusQuery'
+
+      responses:
+        '200':
+          description: List of all sources of the team from the given filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Source'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  
+  
+  /channel/{slug}/source:
+    summary: Handles a specific channel's source
+
+    get:
+      summary: Retrieve specific channel's source information
+      description: >
+        Returns an object corresponding to the given channel's source. If user
+        is only member, it will recieve some reduced information.
+      operationId: getChannelSource
+      tags:
+        - Sources
+
+      security:
+        - rbadminUsers:
+          - member
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+
+      responses:
+        '200':
+          description: Source's object of the given channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    post:
+      summary: Create source for the given channel
+      description: >
+        Create a new source object for the given channel. Sources are unique and
+        cannot exist without a channel. If the specified channel already has a
+        source, or if a source with this name already exists, a `409 - Conflict`
+        HTTP error is responded.
+      operationId: createChannelSource
+      tags:
+        - Sources
+
+      security:
+        - rbadminUsers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+        - $ref: '#/components/parameters/SourceTypeQuery'
+        - in: query
+          name: 'engine'
+          description: >
+            For external source only. Will be ignored otherwise. 
+            Subtype of external audio stream
+          schema:
+            type: string
+            enum:
+              - http
+        - in: query
+          name: 'uri'
+          description: >
+            For external HTTP source only. Will be ignored otherwise.
+            External stream URI
+          schema:
+            type: string
+            format: url
+          
+      responses:
+        '200':
+          description: Source's object corresponding to the given channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    delete:
+      summary: Delete the source of the given channel
+      description: >
+        Delete the source of the specified channel.
+      operationId: deleteChannelSource
+      tags:
+        - Sources
+
+      security:
+        - rbadminUsers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+
+      responses:
+        '200':
+          description: Channel object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /channel/{slug}/source/start:
+    summary: Starts given channel's source
+
+    post:
+      summary: Starts given channel's source
+      description: >
+        Starts given channel's source. If channel's doesn't have a source, a
+        `404` HTTP error is returned.
+      operationId: startChannelSource
+      tags:
+        - Sources
+
+      security:
+        - rbadminUsers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+
+      responses:
+        '200':
+          description: Source's object corresponding to the given slug
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /channel/{slug}/source/stop:
+    summary: Stops given channel's source
+
+    post:
+      summary: Stops given channel's source
+      description: >
+        Stops given channel's source. If channel's doesn't have a source, a
+        `404` HTTP error is returned.
+      operationId: stopChannelSource
+      tags:
+        - Sources
+
+      security:
+        - rbadminUsers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+
+      responses:
+        '200':
+          description: Channel's object corresponding to the given slug
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /admin:
+    summary: Team administration endpoint
+    
+    get:
+      summary: Get detailed information about team
+      description: >
+        Returns a dictionnary containing all information relative to the current
+        team
+      operationId: getAdmin
+      tags:
+        - Admin
+
+      parameters:
+        - $ref: '#/components/parameters/SourceTypeQuery'
+        - $ref: '#/components/parameters/SourceStatusQuery'
+        - in: query
+          name: 'engine'
+          description: >
+            Audio engine used to generate stream
+          schema:
+            type: string
+            enum:
+              - docker
+              - http
+            
+
+      responses:
+        '200':
+          description: List of all sources of the team from the given filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Source'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  
+  /admin/sources:
+    summary: List sources objects
+
+    get:
+      summary: Return a list of all sources matching the given filters
+      description: >
+        Returns a list of sources from the given filters.
+      operationId: getAdminSources
+      tags:
+        - Admin
+
+      security:
+        - rbadminUsers:
+          - admin
+
+      parameters:
+        - $ref: '#/components/parameters/SourceTypeQuery'
+        - $ref: '#/components/parameters/SourceStatusQuery'
+
+      responses:
+        '200':
+          description: List of all sources of the team from the given filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Source'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /admin/source/{channel}:
+    summary: Handles the given source
+
+    get:
+      summary: Get info about the given source
+      description: >
+        Returns information about the given source.
+      operationId: getAdminSource
+      tags:
+        - Admin
+
+      security:
+        - rbadminUsers:
+          - admin
+
+      parameters:
+        - $ref: '#/components/parameters/SourceChannelPath'
+
+      responses:
+        '200':
+          description: Source information
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Source'
+                  - type: object
+                    properties:
+                      current_listeners:
+                        type: integer
+                      
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+
+components:
+
+  securitySchemes:
+
+    rbadminUsers:
+      type: oauth2
+      description: >
+        Main oAuth2 server for Radio Bretzel users authentication and autorization
+      flows:
+        implicit:
+          authorizationUrl:   https://api.radiobretzel.org/oauth/authorize
+          scopes:
+            member: Logged user default role
+            chief:  Team Chief role. Equivalent to team administrator
+            source: Special scope for sources
+            admin:  Special scope for rbadmin module for multi-team administration
+
+
+  responses:
+
+    ValidationFailed:
+      description: Some given arguments were incorrect
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Access is restricted to logged users.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Access is refused due to unsufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: The resource asked was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Conflict:
+      description: >
+        The resource could not be created because a resource with the given
+        slug already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    SourceError:
+      description: The source operation went wrong
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Something went wrong on our side
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+
+  parameters:
+
+    ChannelSlugPath:
+      in: path
+      name: 'slug'
+      description: >
+        Channel's unique identifier. This slug must be alphanumeric and lowercase only. It
+        can contain but can't start nor end with one or two max dashes (-).
+      required: true
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 64
+        pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+
+    ChannelNameQuery:
+      in: query
+      name: 'name'
+      description: Channel common name
+      schema:
+        type: string
+        maxLength: 128
+
+    ChannelDescriptionQuery:
+      in: query
+      name: 'description'
+      description: >
+        Channel description. Write any thing you want !
+      schema:
+        type: string
+        maxLength: 4096
+
+    ChannelArchivedQuery:
+      in: query
+      name: 'archived'
+      description: >
+        Allows chief to request archived channels. This parameter is forbidden
+        for chief scpoed users, and using it will return a HTTP 400 response.
+      schema:
+        type: boolean
+        default: false
+
+    SourceChannelPath:
+      in: path
+      name: 'channel'
+      description: >
+        Source's parent channel slug
+      required: true
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 64
+        pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+
+    SourceTypeQuery:
+      in: query
+      name: 'type'
+      description: >
+        Source type. See Source model for more.
+      schema:
+        type: string
+        enum:
+          - internal
+          - external
+
+    SourceStatusQuery:
+      in: query
+      name: 'status'
+      description: >
+        Source status filter
+      schema:
+        type: string
+        enum:
+          - playing
+          - stopped
+          - dead
+
+
+  schemas:
+
+    Channel:
+      description: >
+        Channels are rooms to chat and listen to music with friends
+      type: object
+      properties:
+        slug:
+          description: >
+            Channel unique identifier.
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+        name:
+          description: >
+            Channel common name
+          type: string
+          maxLength: 128
+        description:
+          description: >
+            Channel public description.
+          type: string
+          maxLength: 4096
+        archived:
+          description: >
+            Soft delete Channel attribute
+          type: boolean
+          default: false
+        source:
+          $ref: '#/components/schemas/Source'
+      required:
+        - slug
+        - archived
+
+    Source:
+      description: >
+        Sources represent audio streams
+      type: object
+      properties:
+        channel:
+          description: >
+            Parent channel's slug. It is used as a primary key
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+        type:
+          description: >
+            Source type. Can be external, representing an existing stream,
+            or any of internal supported sources.
+          type: string
+          enum:
+            - internal
+            - external
+          default: internal
+        status:
+          description: >
+            Source status is dynamically retrieved. The way to retrieve this
+            status depends on the source engine (see `Source.config`).
+            When source is functionnal, its status is set to `playing`.
+            When source is disabled, its status is set to `stopped`.
+            If in any other case, the `dead` status should be used, and alerts
+            sent to chief in order
+          type: string
+          enum:
+            - playing
+            - stopped
+            - dead
+        endpoint:
+          description: >
+            Source public endpoint. This represents the url the user will use
+            to connect to the audio stream. It is automatically generated using
+            the `RBSTREAM_SERVER` and `RBSTREAM_PORT` configuration attributes
+            and `Source.channel` slug.
+          type: string
+          format: url
+        config:
+          description: >
+            Source configuration. This attribute is available to chief and admin
+            only, members are not allowed to view it. Check both types schemas
+            to learn more.
+          oneOf:
+            - $ref: '#/components/schemas/SourceInternal'
+            - $ref: '#/components/schemas/SourceExternal'
+          discriminator:
+            propertyName: type
+            mapping:
+              internal: SourceInternal
+              external: SourceExternal
+      required:
+        - channel
+        - config
+        - endpoint
+
+    SourceInternal:
+      description: >
+        Goups all internal sources engines. These can only be edited by admin
+        through team configuration.
+      allOf:
+        - type: object
+          required:
+            - engine
+          properties:
+            engine:
+              description: >
+                Source engine represents the way audio stream will be generated
+              type: string
+              enum:
+                - docker
+        - oneOf:
+          - $ref: '#/components/schemas/SourceInternalDocker'
+          discriminator:
+            propertyName: engine
+            mapping:
+              docker: '#/components/schemas/SourceInternalDocker'
+
+    SourceExternal:
+      description: >
+        Goups all external sources engines. These can only be edited by admin.
+      allOf:
+        - type: object
+          required:
+            - engine
+          properties:
+            engine:
+              description: >
+                Source engine represent the protocol used to retrieve the audio
+                stream
+              type: string
+              enum:
+                - http
+        - oneOf:
+          - $ref: '#/components/schemas/SourceExternalHTTP'
+          discriminator:
+            propertyName: engine
+            mapping:
+              http: '#/components/schemas/SourceExternalHTTP'
+
+    SourceInternalDocker:
+      description: >
+        Handle an audio running in a docker container
+      type: object
+      required:
+        - docker_uri
+        - image
+      properties:
+        docker_uri:
+          type: string
+          description: >
+            The docker API endpoint. Loaded from team configuration
+          format: uri
+        image:
+          type: string
+          description: >
+            Docker image name and tag. Loaded from team configuration
+          pattern: '^(?:.+/)?([^:]+)(?::.+)?$'
+        container_id:
+          type: string
+          description: >
+            Source's Docker container id
+        command:
+          type: string
+          description: >
+            Docker command used at container's runtime
+        environment:
+          type: object
+          description: >
+            Environment variables dictionnary loaded from team configuration
+          properties:
+            RBSOURCE_CHANNEL_SLUG:
+              description: >
+                automatically set using `Source.channel`
+              type: string
+            RBSOURCE_RBTRACKMAN_URI:
+              description: >
+                automatically set using team configuration
+              type: string
+          additionalProperties:
+            type: string
+          required:
+            - RBSOURCE_CHANNEL_SLUG
+            - RBSOURCE_RBTRACKMAN_URI
+        networks:
+          type: array
+          description: >
+            Docker networks source container should connect to, as an array of
+            Docker network names loaded from team configuration
+          items:
+            type: string
+
+    SourceExternalHTTP:
+      description: >
+        External HTTP existing source.
+      type: object
+      properties:
+        uri:
+          description: >
+            External HTTP audio stream url
+          type: string
+          format: url
+
+    Error:
+      description: >
+        Standard Radio Bretzel Core error.
+      type: object
+      properties:
+        code:
+          description: >
+            HTTP error code
+          type: string
+        message:
+          description: >
+            Error message. Can be string or object, depending of the error
+          type: string
+      required:
+        - code
+        - message
