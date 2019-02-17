@@ -1,7 +1,17 @@
+"""
+    rbcore.channel.model
+    ~~~~~~~~~~~~~~~~~~~~
+
+    This module describes the database representation and operations of the
+    Channel object.
+
+    More info in documentation at https://docs.radiobretzel.org
+"""
+
 from abc import ABCMeta, abstractmethod
 
 from rbcore.database import Model
-from rbcore.errors import DatabaseError, DatabaseNotFound, SourceError, ValidationError
+from rbcore.errors import DatabaseError, DatabaseNotFound, SourceError
 from rbcore.source.model import Sources
 from rbcore.source import source as Source
 from rbcore.utils import formats
@@ -11,42 +21,42 @@ class Channels(Model):
     """ Channel's model definition """
     __metaclass__ = ABCMeta
 
-    _schema = {
-            'slug': {
-                'required': True,
-                'validator': 'slug',
-            },
-            'name': {
-                'type': 'string',
-                'coerce': 'text'
-            },
-            'active': {
-                'validator': 'boolean',
-                'coerce': 'boolean',
-                'default': True
-            },
-            'deleted': {
-                'validator': 'boolean',
-                'coerce': 'boolean',
-                'default': False
-            },
-            'description': {
-                'type': 'string',
-                'coerce': 'text'
-            },
-            'source': {
-                'oneof': [
-                    {
-                        'validator': 'slug',
-                        'nullable': True
-                    },
-                    {
-                        'type': 'dict',
-                        'schema': Sources._schema
-                    }
-                ]
-            }
+    schema = {
+        'slug': {
+            'required': True,
+            'validator': 'slug',
+        },
+        'name': {
+            'type': 'string',
+            'coerce': 'text'
+        },
+        'active': {
+            'validator': 'boolean',
+            'coerce': 'boolean',
+            'default': True
+        },
+        'deleted': {
+            'validator': 'boolean',
+            'coerce': 'boolean',
+            'default': False
+        },
+        'description': {
+            'type': 'string',
+            'coerce': 'text'
+        },
+        'source': {
+            'oneof': [
+                {
+                    'validator': 'slug',
+                    'nullable': True
+                },
+                {
+                    'type': 'dict',
+                    'schema': Sources.schema
+                }
+            ]
         }
+    }
 
     @classmethod
     @abstractmethod
@@ -54,7 +64,7 @@ class Channels(Model):
         """ Returns all matching channels from given filters
         """
         collection = Model.get_collection(cls)
-        schema = Channels._schema.copy()
+        schema = Channels.schema.copy()
         filters = validate(filters, schema, mandatories=False)
         if not filters.pop('active'):
             filters['active'] = True
@@ -85,8 +95,8 @@ class Channels(Model):
                 channel_list.append(channel)
         except SourceError:
             raise
-        except Exception as e:
-            raise DatabaseError(str(e))
+        except Exception as err:
+            raise DatabaseError(str(err))
         return channel_list
 
     @classmethod
@@ -95,7 +105,7 @@ class Channels(Model):
         """ Returns the first matching channel from given name
         """
         collection = Model.get_collection(cls)
-        schema = Channels._schema.copy()
+        schema = Channels.schema.copy()
         filters = validate(filters, schema, mandatories=False)
         if not filters.pop('active'):
             filters['active'] = True
@@ -129,8 +139,8 @@ class Channels(Model):
                 documents.append(document)
         except SourceError:
             raise
-        except Exception as e:
-            raise DatabaseError(str(e))
+        except Exception as err:
+            raise DatabaseError(str(err))
         try:
             document = documents.pop()
         except:
@@ -143,11 +153,12 @@ class Channels(Model):
         """ Returns the created channel from given arguments
         """
         collection = Model.get_collection(cls)
-        schema = Channels._schema.copy()
+        schema = Channels.schema.copy()
         values = validate(values, schema)
         slug = values.get('slug')
         for document in collection.find({'slug': slug}).limit(1):
-            if document: raise ValueError("channel " + str(e) + " already exists.")
+            if document:
+                raise ValueError("channel " + str(slug) + " already exists.")
         source_args = values.pop('source', {})
         if not source_args.get('name'):
             source_args['name'] = slug
@@ -156,9 +167,9 @@ class Channels(Model):
             values['source'] = Sources.create(**source_args)
         channel = Channel(**values)
         try:
-            collection.insert_one(channel._document)
-        except Exception as e:
-            DatabaseError(str(e))
+            collection.insert_one(channel.document)
+        except Exception as err:
+            DatabaseError(str(err))
         return channel
 
     @classmethod
@@ -170,7 +181,7 @@ class Channels(Model):
         collection = Model.get_collection(cls)
         if isinstance(channel, str):
             channel = Channels.find_one(**{'slug': channel})
-        schema = Channels._schema.copy()
+        schema = Channels.schema.copy()
         formats.pop_keys(schema, 'source')
         values = validate(values, schema, mandatories=False)
         vars(channel).update(values)
@@ -182,15 +193,15 @@ class Channels(Model):
         try:
             collection.update_one(
                 {'slug': channel.slug},
-                {'$set': channel._document}
+                {'$set': channel.document}
             )
-        except Exception as e:
-            raise DatabaseError(str(e))
+        except Exception as err:
+            raise DatabaseError(str(err))
         return channel
 
     @classmethod
     @abstractmethod
-    def delete(cls, channel, **opts):
+    def delete(cls, channel, force='False', **opts):
         collection = Model.get_collection(cls)
         source_collection = Model.get_collection(Sources)
         schema = {
@@ -209,21 +220,21 @@ class Channels(Model):
             try:
                 source_collection.delete_one({'name': channel.source.name})
                 collection.delete_one({'slug': channel.slug})
-            except Exception as e:
-                raise DatabaseError(str(e))
+            except Exception as err:
+                raise DatabaseError(str(err))
         else:
             channel.deleted = True
             try:
                 collection.update_one(
                     {'slug': channel.slug},
-                    {'$set': channel._document}
+                    {'$set': channel.document}
                 )
-            except Exception as e:
-                raise DatabaseError(str(e))
+            except Exception as err:
+                raise DatabaseError(str(err))
         return channel
 
 
-class Channel(object):
+class Channel():
     """ Channel object.
     """
     def __init__(self, **kwargs):
@@ -231,7 +242,10 @@ class Channel(object):
         self.active = kwargs.pop('active', True)
         self.deleted = kwargs.pop('deleted', False)
         self.name = kwargs.pop('name', formats.id_to_name(self.slug))
-        self.description = kwargs.pop('description', "Welcome to " + self.name + " Radio Bretzel Channel")
+        self.description = kwargs.pop(
+            'description',
+            "Welcome to " + self.name + " Radio Bretzel Channel"
+        )
         source = kwargs.pop('source', None)
         if isinstance(source, dict):
             self.source = Source.init(**source)
@@ -239,11 +253,8 @@ class Channel(object):
             self.source = source
 
     @property
-    def _document(self):
+    def document(self):
         """ Channel model database schema """
         document = vars(self).copy()
-        try:
-            document['source'] = self.source.name
-        except:
-            document['source'] = None
+        document['source'] = getattr(self.source, 'name', None)
         return document

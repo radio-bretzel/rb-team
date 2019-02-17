@@ -1,16 +1,23 @@
+"""
+    rbcore.database
+    ~~~~~~~~~~~~~~~
+
+    This module handles database operations and the core data model.
+
+    More info in documentation at https://docs.radiobretzel.org
+"""
+
 import abc
+
 from flask import current_app as app
 from flask_pymongo import PyMongo
+
 from rbcore.errors import DatabaseError
 
 
-_models = [
-    'channels',
-    'sources',
-]
-
-
 def get_database():
+    """Returns the current database connection or create it if doesn't exist.
+    """
     if not hasattr(app, 'db'):
         mongo_uri = app.config.get('MONGO_URI')
         if not mongo_uri:
@@ -32,56 +39,62 @@ def get_database():
                 mongo_uri = 'mongodb://' + mongo_uri
         try:
             mongo = PyMongo(app, uri=mongo_uri)
-            app.db = mongo.db
-            app.db.command('ping')
-        except Exception as e:
-            raise DatabaseError("Couldn't initiate database connection : " + str(e))
-    return app.db
+            app.mongo = mongo.db
+            app.mongo.command('ping')
+        except Exception as err:
+            raise DatabaseError("Couldn't initiate database connection : " + str(err))
+    return app.mongo
 
 
-class Model(object):
-    """ Abstract class whose different models will inherit """
+class Model():
+    """Abstract class whose different models will inherit.
+    """
     __metaclass__ = abc.ABCMeta
+
+    __MODELS = [
+        'channels',
+        'sources',
+    ]
 
     @staticmethod
     def get_collection(model):
-        """ Returns collection object from given model class"""
-        db = get_database()
+        """Returns collection object from given model class.
+        """
+        database = get_database()
         name = model.__name__.lower()
-        if name in _models:
-            collection = db[name]
-            return collection
-        else:
+        if name not in Model.__MODELS:
             raise DatabaseError("Couldn't get collection : Unreferenced model ''" + name + "'")
+        collection = database[name]
+        return collection
 
 
     @staticmethod
-    def _schema():
-        """ Returns a tuple of valids and invalids arguments
+    def schema():
+        """Returns a tuple of valids and invalids arguments.
         """
-        raise NotImplementedError('Need to implement Model._schema()')
+        raise NotImplementedError('Need to implement Model.schema()')
 
 
     @classmethod
     @abc.abstractmethod
     def find(cls, **filters):
-        """ Returns multiple matching documents from given filters
+        """Returns multiple matching documents from given filters.
         """
         raise NotImplementedError('Need to implement Model.find()')
 
 
     @classmethod
     @abc.abstractmethod
-    def find_one(cls, slug, **filters):
-        """ Returns the first matching document from given filters
+    def find_one(cls, **filters):
+        """Returns the first matching document from given filters.
         """
         raise NotImplementedError('Need to implement Model.find_one()')
 
 
     @classmethod
     @abc.abstractmethod
-    def create(cls, slug, **args):
-        """ Returns new document from given args
+    def create(cls, **args):
+        """Returns new document from given args.
         """
         raise NotImplementedError('Need to implement Model.create()')
 
@@ -89,15 +102,15 @@ class Model(object):
     @classmethod
     @abc.abstractmethod
     def update(cls, slug, values):
-        """ Returns first matching document with given slug, updated with
-        given document
+        """Returns first matching document with given slug, updated with
+        given document.
         """
         raise NotImplementedError('Need to implement Model.update()')
 
 
     @classmethod
     @abc.abstractmethod
-    def delete(cls, instance):
+    def delete(cls, slug, force='False', **opts):
         """ Delete the current document from given collection
         """
         raise NotImplementedError('Need to implement Model.delete()')

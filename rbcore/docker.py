@@ -1,7 +1,18 @@
-import docker, time
+"""
+    rbcore.docker
+    ~~~~~~~~~~~~~
+
+    This module handles docker connection and operations.
+
+    More info in documentation at https://docs.radiobretzel.org
+"""
+
+import docker
 
 from flask import current_app as app
+
 from rbcore.errors import DockerError
+
 
 def get_docker_client():
     """ Returns an instance of docker client
@@ -15,8 +26,9 @@ def get_docker_client():
             version=version,
             **docker_config)
         return client
-    except Exception as e:
-        raise DockerError("Couldn't init docker connection : " + str(e))
+    except Exception as err:
+        raise DockerError("Couldn't init docker connection : " + str(err))
+
 
 def get_docker_network(name, **config):
     """This function returns a docker network depending on configuration given.
@@ -26,10 +38,9 @@ def get_docker_network(name, **config):
     networks = docker_client.networks.list(name)
     if not networks:
         return docker_client.networks.create(name, **config)
-    elif len(networks) > 1:
+    if len(networks) > 1:
         raise DockerError('Matched multiple Docker networks named '+ name)
-    else:
-        network = networks[0]
+    network = networks[0]
     if not network:
         raise DockerError("Couldn't find nor create docker source network")
     return network
