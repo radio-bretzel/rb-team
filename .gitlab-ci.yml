@@ -11,8 +11,7 @@ build:
   script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
     - docker build -t $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA .
-    - docker build -t $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA-test \
-        -f Dockerfile-test .
+    - docker build -t $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA-test -f Dockerfile-test .
 
 
 pylint_master:
@@ -70,3 +69,4 @@ cleanup_fail:
   when: on_failure
   script:
     - docker image rm -f $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA
+    - docker image rm -f $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA-test
