@@ -14,6 +14,19 @@ build:
     - docker build -t $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA-test -f Dockerfile-test .
 
 
+pylint:
+  stage: lint
+  image: $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA-test
+  except:
+    refs:
+      - develop
+      - master
+  allow_failure: true
+  script:
+    - python -m pylint rbcore
+    - python -m pylint tests
+    - python -m pylint setup.py
+
 pylint_master:
   stage: lint
   image: $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA-test
@@ -21,7 +34,6 @@ pylint_master:
     refs:
       - develop
       - master
-  allow_failure: true
   script:
     - python -m pylint rbcore
     - python -m pylint tests
