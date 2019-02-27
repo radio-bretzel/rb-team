@@ -992,9 +992,9 @@ components:
           type: string
           format: url
 
-    Config:
+    Team:
       description: >
-        Team configuration. Accessible to members
+        Team Information. Accessible to members to read, chiefs only to write
       type: object
       properties:
         version:
@@ -1021,6 +1021,40 @@ components:
           type: integer
           minimum: 0
 
+
+    Member:
+      description: >
+        Team Member object. Members are regular users in a team.
+      type: object
+      properties:
+        slug:
+          description: >
+            Member's "username", as unique identifier, with email address.
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+        email:
+          description: >
+            Member's email address used as unique identifier like slug.
+          type: string
+          format: email
+        name:
+          description: >
+            Member's display name
+          type: string
+          minLength: 2
+          maxLength: 128
+        description:
+          description: >
+            Member's description, bio, introduction text.
+          type: string
+          maxLength: 4096
+        is_chief:
+          description: >
+            Set at true if user is chief
+          type: boolean
+          default: false
 
 
     Error:
