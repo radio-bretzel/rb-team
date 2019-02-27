@@ -33,9 +33,9 @@ paths:
     summary: Instance information
 
     get:
-      summary: Returns information about instance
+      summary: Returns information about Team
       description: >
-        Returns basic information about the instance.
+        Returns basic information about the Team.
       operationId: getTeam
       tags:
         - Team
@@ -46,7 +46,90 @@ paths:
 
       responses:
         '200':
-          $ref: '#/components/responses/TeamInfos'
+          description: >
+            Returns team object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    put:
+      summary: Update information about Team
+      description: >
+        Allow chief to update the current Team information
+      operationId: updateTeam
+      tags:
+        - Team
+
+      security:
+        - rbadminUsers:
+          - chief
+
+      parameters:
+        - in: query
+          name: 'name'
+          description: >
+            Team name
+          schema:
+            type: string
+            maxLength: 128
+        - in: query
+          name: 'description'
+          description: >
+            Team description
+          schema:
+            type: string
+            maxLength: 4096
+
+      responses:
+        '200':
+          description: >
+            Returns updated team object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /team/config:
+    summary: Access to Team configuration
+
+    get:
+      summary: Returns a few information about team configuration
+      description: >
+        Allow chief to view Team configuration
+      operationId: getTeamConfig
+      tags:
+        - Team
+
+      security:
+        - rbadminUsers:
+          - chief
+
+      responses:
+        '200':
+          description: >
+            Returns the Team Config object,
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Config'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -648,14 +731,6 @@ components:
 
   responses:
 
-    TeamInfos:
-      description: Team information standard
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Team'
-
-
     ValidationFailed:
       description: Some given arguments were incorrect
       content:
@@ -787,6 +862,66 @@ components:
 
 
   schemas:
+
+    Team:
+      description: >
+        Team Information. Accessible to members to read, chiefs only to write
+      type: object
+      properties:
+        name:
+          description: >
+            Team name
+          type: string
+          maxLength: 128
+        description:
+          description: >
+            Team decription, welcome text.
+          type: string
+          maxLength: 4096
+        logo:
+          description: >
+            Team logo encoded in base64. Max size 128px*128px
+          type: string
+          format: base64
+        icon:
+          description: >
+            Team icon encoded in base64. Max size 32px*32px
+          type: string
+          format: base64
+
+    Member:
+      description: >
+        Team Member object. Members are regular users in a team.
+      type: object
+      properties:
+        slug:
+          description: >
+            Member's "username", as unique identifier, with email address.
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+        email:
+          description: >
+            Member's email address used as unique identifier like slug.
+          type: string
+          format: email
+        name:
+          description: >
+            Member's display name
+          type: string
+          minLength: 2
+          maxLength: 128
+        description:
+          description: >
+            Member's description, bio, introduction text.
+          type: string
+          maxLength: 4096
+        is_chief:
+          description: >
+            Set at true if user is chief
+          type: boolean
+          default: false
 
     Channel:
       description: >
@@ -992,70 +1127,23 @@ components:
           type: string
           format: url
 
-    Team:
+    Config:
       description: >
-        Team Information. Accessible to members to read, chiefs only to write
+        Team main configuration object. This configuration is stored in database
+        and is updatable by admins (if this team is attached to a Radio Bretzel
+        Admin module)
       type: object
       properties:
-        version:
+        members_limit:
           description: >
-            Application current version
-          type: string
-        name:
-          description: >
-            Team name
-          type: string
-        contact:
-          description: >
-            Contact email address
-          type: string
-          format: email
-        members:
-          description: >
-            Current number of users
+            Maximum number of members allowed to join the team.
           type: integer
           minimum: 1
-        channels:
+        channels_limit:
           description: >
-            Current number of channels
+            Maximum number of channels allowed in the team.
           type: integer
-          minimum: 0
-
-
-    Member:
-      description: >
-        Team Member object. Members are regular users in a team.
-      type: object
-      properties:
-        slug:
-          description: >
-            Member's "username", as unique identifier, with email address.
-          type: string
-          minLength: 2
-          maxLength: 64
-          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
-        email:
-          description: >
-            Member's email address used as unique identifier like slug.
-          type: string
-          format: email
-        name:
-          description: >
-            Member's display name
-          type: string
-          minLength: 2
-          maxLength: 128
-        description:
-          description: >
-            Member's description, bio, introduction text.
-          type: string
-          maxLength: 4096
-        is_chief:
-          description: >
-            Set at true if user is chief
-          type: boolean
-          default: false
-
+          minimum: 1
 
     Error:
       description: >
