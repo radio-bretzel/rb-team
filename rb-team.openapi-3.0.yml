@@ -78,21 +78,37 @@ paths:
         - rbadminUsers:
           - chief
 
-      parameters:
-        - in: query
-          name: 'name'
-          description: >
-            Team name
-          schema:
-            type: string
-            maxLength: 128
-        - in: query
-          name: 'description'
-          description: >
-            Team description
-          schema:
-            type: string
-            maxLength: 4096
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  description: >
+                    Team name
+                  type: string
+                  maxLength: 128
+                description:
+                  description: >
+                    Team description
+                  type: string
+                  maxLength: 4096
+                logo:
+                  description: >
+                    Team logo encoded in base64. Max 128px*128px
+                  type: string
+                  format: base64
+                icon:
+                  description: >
+                    Team icon encoded in base64. Max 32px*32px
+                  type: string
+                  format: base64
+            encoding:
+              logo:
+                contentType: image/jpeg, image/png
+              icon:
+                contentType: image/jpeg, image/png
 
       responses:
         '200':
@@ -113,7 +129,7 @@ paths:
 
 
 
-  /team/config:
+  /config:
     summary: Access to Team configuration
 
     get:
@@ -136,6 +152,129 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Config'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /profile:
+    summary: Handles member's profile
+    
+    get: 
+      summary: Returns current member's profile
+      description: >
+        Returns connected member's profile.
+      operationId: getProfile
+      tags:
+        - Members
+      
+      security:
+        - rbadminUsers:
+          - member
+          
+      responses:
+        '200':
+          description: Member's profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'        
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    put:
+      summary: Updates current member's profile
+      description: >
+        Update the currently connected member's profile
+      operationId: updateProfile
+      tags:
+        - Members
+      
+      security:
+        - rbadminUsers:
+          - member
+
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                email:
+                  description: >
+                    Member's email address
+                name:
+                  description: >
+                    Member's name
+                  type: string
+                  maxLength: 128
+                password:
+                  description: >
+                    Member's password
+                  type: string
+                  format: password
+                description:
+                  description: >
+                    Member's description, bio
+                  type: string
+                  maxLength: 4096
+                avatar:
+                  description: >
+                    Member's avatar encoded in base64. Max size 128px*128px
+                  type: string
+                  format: base64
+
+      responses:
+        '200':
+          description: Member's updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    delete:
+      summary: Delete current member
+      description: >
+        Delete the current member's account. Implies logout.
+      operationId: deleteMember
+      tags: 
+        - Members
+
+      security:
+        - rbadminUsers:
+          - member
+
+      parameters:
+        - in: query
+          name: 'password'
+          description: >
+            Member's password should be provided in order to confirm deletion
+          schema:
+            type: string
+      
+      responses:
+        '200':
+          description: Member has been successfully deleted
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -197,7 +336,7 @@ paths:
 
   
   /member/{slug}:
-    summary: Handle a single member
+    summary: Handles a single member
     
     get:
       summary: Returns Member's profile
@@ -221,8 +360,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Member'
-      
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   
+    put:
+    
+    delete:
 
 
   /channels:
@@ -1006,11 +1153,15 @@ components:
             Team name
           type: string
           maxLength: 128
+          default: "Radio Bretzel Team"
         description:
           description: >
             Team decription, welcome text.
           type: string
           maxLength: 4096
+          default: >
+            Welcome to your Radio Bretzel Team ! Discover its channels and say
+            hi to your friends !
         logo:
           description: >
             Team logo encoded in base64. Max size 128px*128px
@@ -1029,16 +1180,19 @@ components:
       properties:
         slug:
           description: >
-            Member's "username", as unique identifier, with email address.
+            Member's "username" used as unique identifier, with email address.
           type: string
           minLength: 2
           maxLength: 64
           pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
         email:
           description: >
-            Member's email address used as unique identifier like slug.
+            Member's email address used as unique identifier with slug.
           type: string
           format: email
+        password:
+          description: >
+            Member's password
         name:
           description: >
             Member's display name
@@ -1050,11 +1204,19 @@ components:
             Member's description, bio, introduction text.
           type: string
           maxLength: 4096
+        avatar:
+          description: >
+            Member's avatar, encoded in base64. Max size 128px*128px
+          type: string
+          format: base64
         is_chief:
           description: >
             Set at true if user is chief
           type: boolean
           default: false
+      required:
+        - slug
+        - email
 
     Channel:
       description: >
@@ -1243,6 +1405,8 @@ components:
             External HTTP audio stream url
           type: string
           format: url
+      required:
+        - uri
 
     Config:
       description: >
