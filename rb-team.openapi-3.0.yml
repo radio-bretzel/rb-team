@@ -163,26 +163,26 @@ paths:
 
   /profile:
     summary: Handles member's profile
-    
-    get: 
+
+    get:
       summary: Returns current member's profile
       description: >
         Returns connected member's profile.
       operationId: getProfile
       tags:
         - Members
-      
+
       security:
         - rbadminUsers:
           - member
-          
+
       responses:
         '200':
           description: Member's profile
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Member'        
+                $ref: '#/components/schemas/Member'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -198,7 +198,7 @@ paths:
       operationId: updateProfile
       tags:
         - Members
-      
+
       security:
         - rbadminUsers:
           - member
@@ -255,7 +255,7 @@ paths:
       description: >
         Delete the current member's account. Implies logout.
       operationId: deleteMember
-      tags: 
+      tags:
         - Members
 
       security:
@@ -269,7 +269,7 @@ paths:
             Member's password should be provided in order to confirm deletion
           schema:
             type: string
-      
+
       responses:
         '200':
           description: Member has been successfully deleted
@@ -286,7 +286,7 @@ paths:
 
   /members:
     summary: Get a list of team members
-    
+
     get:
       summary: Returns a list of members matching the given filters
       description: >
@@ -294,11 +294,11 @@ paths:
       operationId: getMembers
       tags:
         - Members
-      
-      security: 
+
+      security:
         - rbadminUsers:
           - members
-      
+
       parameters:
         - in: query
           name: 'slug'
@@ -334,7 +334,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
 
-  
+
   /member/{slug}:
     summary: Handles a single member
     
@@ -345,14 +345,14 @@ paths:
       operationId: getMember
       tags:
         - Members
-      
+
       security:
         - rbadminUsers:
           - members
-      
+
       parameters:
         - $ref: '#/components/parameters/MemberSlugPath'
-      
+
       responses:
         '200':
           description: Member's profile
@@ -366,9 +366,23 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  
+
     put:
-    
+      summary: Updates Member's object
+      description: >
+        Returns the updated Member's object.
+      operationId: updateMember
+      tags:
+        - Members
+
+      security:
+        - rbadminUsers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/MemberSlugPath'
+        -
+
     delete:
 
 
@@ -945,7 +959,6 @@ paths:
 
 
 components:
-
   securitySchemes:
 
     rbadminUsers:
@@ -1016,7 +1029,7 @@ components:
 
 
   parameters:
-  
+
     MemberSlugPath:
       in: path
       name: 'slug'
@@ -1038,7 +1051,7 @@ components:
       schema:
         type: string
         format: email
-      
+
     MemberNameQuery:
       in: query
       name: 'name'
@@ -1389,7 +1402,7 @@ components:
         networks:
           type: array
           description: >
-            Docker networks our source container should connect to, as an array 
+            Docker networks our source container should connect to, as an array
             of Docker network names loaded from team configuration
           items:
             type: string
