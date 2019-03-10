@@ -47,17 +47,18 @@ paths:
         - Team
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - member
 
       responses:
         '200':
-          description: >
-            Returns team object
+          description: Team object regarding scope
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Team'
+                oneOf:
+                 - $ref: '#/components/x-Views/TeamMember'
+                 - $ref: '#/components/x-Views/TeamChief'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -75,7 +76,7 @@ paths:
         - Team
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - chief
 
       requestBody:
@@ -112,12 +113,11 @@ paths:
 
       responses:
         '200':
-          description: >
-            Returns updated team object
+          description: Updated team object
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Team'
+                $ref: '#/components/x-Views/TeamChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -141,17 +141,16 @@ paths:
         - Team
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - chief
 
       responses:
         '200':
-          description: >
-            Returns the Team Config object,
+          description: Team config object
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Config'
+                $ref: '#/components/x-Views/ConfigChief'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -173,16 +172,16 @@ paths:
         - Members
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - member
 
       responses:
         '200':
-          description: Member's profile
+          description: Current member's profile
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Member'
+                $ref: '#/components/x-Views/Profile'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -200,7 +199,7 @@ paths:
         - Members
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - member
 
       requestBody:
@@ -235,11 +234,11 @@ paths:
 
       responses:
         '200':
-          description: Member's updated profile
+          description: Current member's updated profile
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Member'
+                $ref: '#/components/x-Views/Profile'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -254,12 +253,12 @@ paths:
       summary: Delete current member
       description: >
         Delete the current member's account. Implies logout.
-      operationId: deleteMember
+      operationId: deleteProfile
       tags:
         - Members
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - member
 
       parameters:
@@ -296,7 +295,7 @@ paths:
         - Members
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - members
 
       parameters:
@@ -319,9 +318,91 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Member'
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/x-Views/MemberMember'
+                  - type: array
+                    items:
+                      $ref: '#/components/x-Views/MemberChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /member/{slug}:
+    summary: Handles a single member designated by its slug
+    
+    get:
+      summary: Returns Member's profile
+      description: >
+        Returns the profile of the member corresponding to the given slug
+      operationId: getMember
+      tags:
+        - Members
+
+      security:
+        - rbcoreUsers:
+          - members
+
+      parameters:
+        - $ref: '#/components/parameters/MemberSlugPath'
+
+      responses:
+        '200':
+          description: Member's profile
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/x-Views/MemberMember'
+                  - $ref: '#/components/x-Views/MemberChief'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    put:
+      summary: Updates Member's object
+      description: >
+        Returns the updated Member's object.
+      operationId: updateMember
+      tags:
+        - Members
+
+      security:
+        - rbcoreUsers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/MemberSlugPath'
+        - in: query
+          name:  disabled
+          description: >
+            Set to true to disable member
+          schema:
+            type: boolean
+      
+      responses:
+        '200':
+          description: Member's profile
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/x-Views/MemberMember'
+                  - $ref: '#/components/x-Views/MemberChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -334,32 +415,26 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
 
-
-  /member/{slug}:
-    summary: Handles a single member
-    
-    get:
-      summary: Returns Member's profile
+    delete:
+      summary: Delete member
       description: >
-        Returns the profile of the member corresponding to the given slug
-      operationId: getMember
+        Delete member object
+      operationId: deleteMember
       tags:
         - Members
-
+        
       security:
-        - rbadminUsers:
-          - members
-
+        - rbcoreUsers:
+          - chief
+      
       parameters:
         - $ref: '#/components/parameters/MemberSlugPath'
 
       responses:
         '200':
-          description: Member's profile
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Member'
+          description: Member has been successfully deleted
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -367,23 +442,6 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-    put:
-      summary: Updates Member's object
-      description: >
-        Returns the updated Member's object.
-      operationId: updateMember
-      tags:
-        - Members
-
-      security:
-        - rbadminUsers:
-          - chief
-
-      parameters:
-        - $ref: '#/components/parameters/MemberSlugPath'
-        -
-
-    delete:
 
 
   /channels:
@@ -401,7 +459,7 @@ paths:
         - Channels
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - member
 
       parameters:
@@ -425,9 +483,13 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Channel'
+                oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/x-Views/ChannelMember'
+                - type: array
+                  items:
+                    $ref: '#/components/x-Views/ChannelChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -458,7 +520,7 @@ paths:
         - Channels
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - member
 
       responses:
@@ -467,7 +529,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Channel'
+                oneOf:
+                  - $ref: '#/components/x-Views/ChannelMember'
+                  - $ref: '#/components/x-Views/ChannelChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -490,7 +554,7 @@ paths:
         - Channels
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - chief
 
       parameters:
@@ -503,7 +567,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Channel'
+                $ref: '#/components/x-Views/ChannelChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -526,7 +590,7 @@ paths:
         - Channels
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - chief
 
       parameters:
@@ -540,7 +604,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Channel'
+                $ref: '#/components/x-Views/ChannelChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -562,7 +626,7 @@ paths:
         - Channels
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - chief
 
       responses:
@@ -571,7 +635,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Channel'
+                $ref: '#/components/x-Views/ChannelChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -597,7 +661,7 @@ paths:
         - Sources
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - chief
 
       parameters:
@@ -612,7 +676,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Source'
+                  $ref: '#/components/x-Views/SourceChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -642,7 +706,7 @@ paths:
         - Sources
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - member
 
       parameters:
@@ -654,7 +718,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Source'
+                oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/x-Views/SourceMember'
+                - type: array
+                  items:
+                    $ref: '#/components/x-Views/SourceChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -681,7 +751,7 @@ paths:
         - Sources
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - chief
 
       parameters:
@@ -710,7 +780,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Source'
+                $ref: '#/components/x-Views/SourceChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -730,7 +800,7 @@ paths:
         - Sources
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - chief
 
       parameters:
@@ -738,11 +808,11 @@ paths:
 
       responses:
         '200':
-          description: Channel object
+          description: Deleted source object
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Channel'
+                $ref: '#/components/x-Views/SourceChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -772,7 +842,7 @@ paths:
         - Sources
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - chief
 
       responses:
@@ -781,7 +851,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Source'
+                $ref: '#/components/x-Views/SourceChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -813,7 +883,7 @@ paths:
         - Sources
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - chief
 
       responses:
@@ -822,7 +892,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Source'
+                $ref: '#/components/x-Views/SourceChief'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -884,7 +954,7 @@ paths:
         - Admin
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - admin
 
       parameters:
@@ -928,7 +998,7 @@ paths:
         - Admin
 
       security:
-        - rbadminUsers:
+        - rbcoreUsers:
           - admin
 
       responses:
@@ -961,7 +1031,7 @@ paths:
 components:
   securitySchemes:
 
-    rbadminUsers:
+    rbcoreUsers:
       type: oauth2
       description: >
         Main oAuth2 server for Radio Bretzel users authentication and autorization
@@ -976,6 +1046,7 @@ components:
 
 
   responses:
+
     ValidationFailed:
       description: Some given arguments were incorrect
       content:
@@ -1029,7 +1100,6 @@ components:
 
 
   parameters:
-
     MemberSlugPath:
       in: path
       name: 'slug'
@@ -1154,6 +1224,178 @@ components:
           - dead
 
 
+  x-Views: 
+    # Views
+    TeamMember:
+      description: View of team object for members
+      allOf:
+        - $ref: '#/components/schemas/Team'
+              
+    TeamChief:
+      description: View of team object for chief
+      allOf:
+        - $ref: '#/components/schemas/Team'
+        - type: object
+          properties:
+            config:
+              $ref: '#/components/schemas/Config'
+    
+    ConfigChief:
+      description: View of config object for chief
+      allOf:
+        - $ref: '#/components/schemas/Config'
+
+    Profile:
+      description: View of current member profile
+      type: object
+      properties:
+        slug:
+          type: string
+        email:
+          type: string
+        name: 
+          type: string
+        description:
+          type: string
+        avatar:
+          type: string
+          format: base64
+        is_chief:
+          type: boolean
+
+    MemberMember:
+      description: View of a member of for members
+      type: object
+      properties:
+        slug:
+          type: string
+        email:
+          type: string
+        name: 
+          type: string
+        description:
+          type: string
+        avatar:
+          type: string
+          format: base64
+        is_chief:
+          type: boolean
+    
+    MemberChief:
+      description: View of a member for chief
+      type: object
+      properties:
+        slug:
+          type: string
+        email:
+          type: string
+        name: 
+          type: string
+        description:
+          type: string
+        avatar:
+          type: string
+          format: base64
+        is_chief:
+          type: boolean
+        disabled: 
+          type: boolean
+    
+    ChannelMember:
+      description: View of channel object for members
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        source:
+          type: object
+          properties:
+            endpoint:
+              type: string
+            status:
+              type: string
+              enum:
+                - playing
+                - stopped
+                - dead
+
+    ChannelChief:
+      description: View of channel object for chief
+      type: object
+      properties:
+        slug:
+          description: Channel's slug
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        archived: 
+          type: boolean
+        source:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - internal
+                - http
+            endpoint:
+              type: string
+            status:
+              type: string
+              enum:
+                - playing
+                - stopped
+                - dead
+            config:
+              description: >
+                Only for external sources
+              oneOf:
+                - $ref: '#/components/schemas/SourceHTTP'
+
+    SourceMember:
+      description: View of source object for member
+      type: object
+      properties:
+        endpoint:
+          type: string
+        status:
+          type: string
+          enum:
+            - playing
+            - stopped
+            - dead
+
+    SourceChief:
+      description: View of source object for chief
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - internal
+            - http
+        endpoint:
+          type: string
+        status:
+          type: string
+          enum:
+            - playing
+            - stopped
+            - dead
+        config:
+          description: >
+            Only for external sources
+          oneOf:
+            - $ref: '#/components/schemas/SourceHTTP'
+
+
+
   schemas:
 
     Team:
@@ -1224,7 +1466,12 @@ components:
           format: base64
         is_chief:
           description: >
-            Set at true if user is chief
+            Set to true if user is chief
+          type: boolean
+          default: false
+        disabled:
+          description: >
+            Set to true to disable the user
           type: boolean
           default: false
       required:
