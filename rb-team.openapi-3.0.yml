@@ -179,9 +179,10 @@ paths:
             type: string
           required: true
         - in: query
-          name: 'username'
+          name: 'slug'
           description: >
-            Member's slug
+            Team Member slug. This slug must be alphanumeric and lowercase only. It
+            can contain but can't start nor end with one or two max dashes (-).
           schema:
             type: string
             minLength: 2
@@ -191,22 +192,21 @@ paths:
         - in: query
           name: 'email'
           description: >
-            Member's email address
+            Team Member email address
           schema:
             type: string
-            format: mail
+            format: email
           required: true
-        - in: query
-          name: 'name'
-          description: >
-            Member's display name
-          schema:
-            type: string
-            maxLength: 128
+        - $ref: '#/components/parameters/MemberPasswordQuery'
+
 
       responses:
         '200':
-          $ref: '#/components/x-Views/Profile'
+          description: New member's profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/Profile'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '403':
@@ -215,11 +215,57 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
 
+
   /login:
     post:
+      summary: Login endpoint
+      description: >
+        Member's login endpoint. One of Member's slug or email is required.
+      operationId: login
+      tags:
+        - Authentication
+
+      parameters:
+        - $ref: '#/components/parameters/MemberSlugQuery'
+        - $ref: '#/components/parameters/MemberEmailQuery'
+        - $ref: '#/components/parameters/MemberPasswordQuery'
+
+      responses:
+        '200':
+          description: Logged member profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/Profile'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
 
   /logout:
     post:
+      summary: Logs out the current Member
+      description: >
+        Logs out the current Member
+      operationId: logout
+      tags: 
+        - Authentication
+      
+      security:
+        - rbteamUsers:
+          - members
+          
+      responses:
+        '200':
+          description: Member successfully logged out
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /invite:
     post:
@@ -1190,6 +1236,18 @@ components:
         maxLength: 64
         pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
 
+    MemberSlugQuery:
+      in: query
+      name: 'slug'
+      description: >
+        Team Member slug. This slug must be alphanumeric and lowercase only. It
+        can contain but can't start nor end with one or two max dashes (-).
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 64
+        pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+
     MemberEmailQuery:
       in: query
       name: 'email'
@@ -1198,6 +1256,16 @@ components:
       schema:
         type: string
         format: email
+
+    MemberPasswordQuery:
+      in: query
+      name: 'password'
+      description: >
+        Team Member's password
+      schema:
+        type: string
+        format: password
+      required: true
 
     MemberNameQuery:
       in: query
