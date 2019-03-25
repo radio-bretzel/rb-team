@@ -250,13 +250,13 @@ paths:
       description: >
         Logs out the current Member
       operationId: logout
-      tags: 
+      tags:
         - Authentication
-      
+
       security:
         - rbteamUsers:
           - members
-          
+
       responses:
         '200':
           description: Member successfully logged out
