@@ -267,8 +267,37 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+
+
   /invite:
     post:
+      summary: Allow Chief to invite a new member
+      description: >
+        Allow Chief to create a registration token. This token will be used by a
+        new member to register.
+      operationId: invite
+      tags: 
+        - Authentication
+      
+      security:
+        - rbteamUsers:
+          - chief
+
+      responses:
+        '200':
+          description: Registration Token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/RegistrationToken'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+          
+          
 
   /oauth/token:
     get:
@@ -1540,6 +1569,10 @@ components:
             Only for external sources
           oneOf:
             - $ref: '#/components/schemas/SourceHTTP'
+            
+    RegistrationToken:
+      description: View of a registration token
+      type: string
 
 
   schemas:
