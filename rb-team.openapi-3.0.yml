@@ -26,6 +26,9 @@ tags:
   - name: Sources
     description: >
       Sources are process creating the audio that will be streamed
+  - name: Messages
+    description: >
+      Chat operations
   # - name: Admin
   #   description: >
   #     Restricted admin area
@@ -298,7 +301,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
           
           
-
+# TODO
   /oauth/token:
     get:
     post:
@@ -1057,6 +1060,28 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
+
+
+# TODO
+  /channel/{slug}/messages:
+    get:
+      summary: Returns a list of messages for the given channel
+      description: >
+        Returns by default the last 50 messages published on this channel.
+      operationId: getChannelMessages
+      tags:
+        - Messages
+        
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+
+
+  /message/{id}:
+    get:
+    post:
+    put:
+    delete:
 
 
   # Will be implemented later
