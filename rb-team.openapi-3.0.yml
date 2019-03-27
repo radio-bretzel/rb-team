@@ -279,9 +279,9 @@ paths:
         Allow Chief to create a registration token. This token will be used by a
         new member to register.
       operationId: invite
-      tags: 
+      tags:
         - Authentication
-      
+
       security:
         - rbteamUsers:
           - chief
@@ -299,8 +299,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
-          
-          
+
+
 # TODO
   /oauth/token:
     get:
@@ -1048,16 +1048,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/x-Views/SourceChief'
-        '400':
-          $ref: '#/components/responses/ValidationFailed'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1072,16 +1068,155 @@ paths:
       operationId: getChannelMessages
       tags:
         - Messages
-        
+
       parameters:
         - $ref: '#/components/parameters/ChannelSlugPath'
+        - in: query
+          name: 'limit'
+          description: >
+            Max number of messages returned by the query. Use it for pagination
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 30
+        - in: query
+          name: 'offset_date'
+          description: >
+            Returns messages from the given date. Default to "now"
+          schema:
+            type: string
+            format: date
+
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Send a message on channel's chat
+      description: >
+        Send a message on channel's chat
+      operationId: postChannelMessages
+      tags:
+        - Messages
+
+      security:
+        - rbteamUsers:
+          - members
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+        - in: query
+          name: 'content'
+          description: Message's body
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 4096
+
+      responses:
+        '201':
+          description: Message successfully sent
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 
   /message/{id}:
-    get:
-    post:
     put:
+      summary: Edit an existing message
+      description: >
+        Allow Chief or message's owner to edit a message
+      operationId: editMessage
+      tags:
+        - Messages
+
+      security:
+        - rbteamUsers:
+          - member
+
+      parameters:
+        - $ref: '#/components/parameters/MessageIdPath'
+        - in: query
+          name: 'content'
+          description: >
+            Message content
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 4096
+
+      responses:
+        '200':
+          description: Updated Message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
     delete:
+      summary: Remove an existing message
+      description: >
+        Allow Chief or message's owner to delete a message
+      operationId: deleteMessage
+      tags:
+        - Messages
+
+      security:
+        - rbteamUsers:
+          - member
+
+      parameters:
+        - $ref: '#/components/parameters/MessageIdPath'
+
+      responses:
+        '200':
+          description: The message has been successfully deleted
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 
 
   # Will be implemented later
@@ -1424,6 +1559,15 @@ components:
           - stopped
           - dead
 
+    MessageIdPath:
+      in: path
+      name: 'id'
+      description: Message unique identifier
+      schema:
+        type: string
+        format: uuid
+      required: true
+
 
   x-Views:
     # Views
@@ -1594,7 +1738,7 @@ components:
             Only for external sources
           oneOf:
             - $ref: '#/components/schemas/SourceHTTP'
-            
+
     RegistrationToken:
       description: View of a registration token
       type: string
@@ -1874,6 +2018,50 @@ components:
           format: url
       required:
         - uri
+
+    Message:
+      description: >
+        Text messages object.
+      type: object
+      properties:
+        _id:
+          description: Message unique identifier. Generated automatically
+          type: string
+          format: uuid
+        channel:
+          description: Channel's slug where message is attached.
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+        author:
+          description: author's slug
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+        sent_at:
+          description: message's sending datetime
+          type: string
+          format: datetime
+        content:
+          description: body of the message
+          type: string
+          minLength: 1
+          maxLength: 4096
+        edited:
+          description: Set at true if message have been edited
+          type: boolean
+          default: false
+      required:
+        - _id
+        - channel
+        - author
+        - sent_at
+        - content
+        - edited
+
+
 
     Config:
       description: >
