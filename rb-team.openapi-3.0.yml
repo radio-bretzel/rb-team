@@ -1,14 +1,18 @@
-openapi: "3.0.0"
+openapi: '3.0.0'
 info:
-  description: "Radio Bretzel Team API reference."
-  version: "0.2.0"
-  title: "rb-team"
+  description: >
+    Radio Bretzel teams are group of people sharing music and chating about it !
+    This module called rbTeam comes with two other base components,
+    rbTrackman and rbStream, which together form Radio Bretzel !
+    RbTeam module handles music sources, chat rooms, member profile, authentication
+    and authorization.
+  version: '0.9.0'
+  title: 'Radio Bretzel Team API reference'
   contact:
-    email: "radiobretzel@ntymail.com"
+    email: 'radiobretzel@ntymail.com'
   license:
-    name: "GPL-3.0"
-    url: "https://www.gnu.org/licenses/gpl-3.0.html"
-
+    name: 'GPL-3.0'
+    url: 'https://www.gnu.org/licenses/gpl-3.0.html'
 
 tags:
   - name: Team
@@ -16,7 +20,7 @@ tags:
       Manage your Radio Bretzel team !
   - name: Authentication
     description: >
-      Handling of login, registration and sessions
+      Handling of sessions and authorizations
   - name: Members
     description: >
       Team members are people like you and me sharing their music
@@ -132,7 +136,37 @@ paths:
 
 
 
-  /config:
+  /team/invite:
+    post:
+      summary: Allow Chief to invite a new member
+      description: >
+        Allow Chief to create a registration token. This token will be used by a
+        new member to register.
+      operationId: invite
+      tags:
+        - Team
+
+      security:
+        - TeamMembers:
+          - chief
+
+      responses:
+        '200':
+          description: Registration Token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/RegistrationToken'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /team/config:
     summary: Access to Team configuration
 
     get:
@@ -163,13 +197,13 @@ paths:
 
 
 
-  /login:
+  /auth/login:
     post:
       summary: Authenticates a member and returns session tokens
       description: >
         Member's login endpoint. One of Member's slug or email is required.
         Returns an oAuth token containg access and refresh JSON Web Tokens.
-      operationId: requestToken
+      operationId: loginMember
       tags:
         - Authentication
 
@@ -180,11 +214,11 @@ paths:
 
       responses:
         '200':
-          description: Logged member profile
+          description: Access and Refresh Tokens
           content:
             application/json:
               schema:
-                $ref: '#/components/x-Views/Profile'
+                $ref: '#/components/x-Views/AfterLogin'
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '500':
@@ -192,12 +226,13 @@ paths:
 
 
 
-  /logout:
+
+  /auth/logout:
     post:
       summary: Logs out the current Member
       description: >
-        Logs out the current Member
-      operationId: logout
+        Logs out the current Member, revoking access and refresh tokens.
+      operationId: logoutMember
       tags:
         - Authentication
 
@@ -217,8 +252,84 @@ paths:
 
 
 
-  /oauth/refresh:
+  /auth/validate_token:
     post:
+      summary: Validates a token for rbTrackman and rbStream apps.
+      description: >
+        rbTeam show up as a authorization server for rbTrackman and rbStream
+        clients.
+      operationId: validateToken
+      tags:
+        - Authentication
+
+      security:
+        - RadioBretzelApps:
+          - rbTrackman
+          - rbStream
+
+      parameters:
+        - in: query
+          name: 'token'
+          description: >
+            JWT to validate
+          schema:
+            type: string
+            format: JWT
+
+      responses:
+        '200':
+          description: Token validated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /auth/refresh_token:
+    post:
+      summary: asks for a new access token against a refresh token.
+      description: >
+        This method accepts a refresh token as parameter and returns a access token
+        if valid.
+      operationId: refreshToken
+      tags:
+        - Authentication
+
+      security:
+        - TeamMebers:
+          - member
+          - chief
+        - RadioBretzelApps:
+          - rbTrackman
+          - rbStream
+
+      parameters:
+        - in: query
+          name: 'refresh_token'
+          description: >
+            Refresh token to be validated for a new access token
+          schema:
+            type: string
+            format: JWT
+
+      responses:
+        '200':
+          description: New Access Token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/AccessToken'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 
   /profile:
@@ -399,36 +510,6 @@ paths:
 
 
 
-  /invite:
-    post:
-      summary: Allow Chief to invite a new member
-      description: >
-        Allow Chief to create a registration token. This token will be used by a
-        new member to register.
-      operationId: invite
-      tags:
-        - Members
-
-      security:
-        - TeamMembers:
-          - chief
-
-      responses:
-        '200':
-          description: Registration Token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/x-Views/RegistrationToken'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-
-
   /member/register:
     post:
       summary: Register a new member against a registration token
@@ -446,6 +527,7 @@ paths:
             in order to verify the registrating user has been invited.
           schema:
             type: string
+            format: JWT
           required: true
         - in: query
           name: 'slug'
@@ -467,7 +549,6 @@ paths:
             format: email
           required: true
         - $ref: '#/components/parameters/MemberPasswordQuery'
-
 
       responses:
         '200':
@@ -712,7 +793,7 @@ paths:
 
       responses:
         '201':
-          description: "Channel was successfully created"
+          description: 'Channel was successfully created'
           content:
             application/json:
               schema:
@@ -1077,7 +1158,7 @@ paths:
         - in: query
           name: 'offset_date'
           description: >
-            Returns messages from the given date. Default to "now"
+            Returns messages from the given date. Default to 'now'
           schema:
             type: string
             format: date
@@ -1225,6 +1306,9 @@ paths:
   #     operationId: getAdmin
   #     tags:
   #       - Admin
+  #     security:
+  #       - RadioBretzelAdmin:
+  #         - admin
   #
   #     responses:
   #       '200':
@@ -1260,7 +1344,7 @@ paths:
   #       - Admin
   #
   #     security:
-  #       - TeamMembers:
+  #       - RadioBretzelAdmin:
   #         - admin
   #
   #     parameters:
@@ -1304,7 +1388,7 @@ paths:
   #       - Admin
   #
   #     security:
-  #       - TeamMembers:
+  #       - RadioBretzelAdmin:
   #         - admin
   #
   #     responses:
@@ -1338,27 +1422,30 @@ components:
   securitySchemes:
 
     TeamMembers:
-      type: oauth2
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
       description: >
-        Main oAuth2 server for Radio Bretzel users authentication and autorization
-      flows:
-        password:
-          tokenUrl: /oauth/token
-          refreshUrl: /oauth/refresh_token
-          scopes:
-            member: Logged user default role
-            chief:  Team Chief role. Equivalent to team administrator
+        Team scoped authentication for members. JWTs used as access tokens provide
+        scopes used as roles.
 
-    RadioBretzelAdmin:
-      type: oauth2
+    RadioBretzelApps:
+      type: apiKey
+      in: header
+      name: 'X-RBTEAM-API-KEY'
       description: >
-        rbAdmin module authorization flow. Handles admin space authorization.
-      flows:
-        clientCredentials:
-          tokenUrl: /oauth/token
-          refreshUrl: /oauth/refresh_token
-          scopes:
-            admin:  Special scope for rbadmin module for multi-team administration
+        rbTrackman, rbStream dedicated authentication. Used for token validation
+
+    # RadioBretzelAdmin:
+    #   type: oauth2
+    #   description: >
+    #     rbAdmin module authorization flow. Handles admin space authorization.
+    #   flows:
+    #     password:
+    #       tokenUrl: https://rbadmin/oauth/token
+    #       refreshUrl: https://rbadmin/oauth/refresh_token
+    #       scopes:
+    #         admin:  Special scope for rbadmin module for multi-team administration
 
 
   responses:
@@ -1743,10 +1830,145 @@ components:
           oneOf:
             - $ref: '#/components/schemas/SourceHTTP'
 
-    RegistrationToken:
-      description: View of a registration token
-      type: string
+    AfterLogin:
+      description: View sent after member login
+      type: object
+      properties:
+        access_token:
+          $ref: '#/components/x-Views/AccessToken'
+        refresh_token:
+          $ref: '#/components/x-Views/RefreshToken'
 
+    AccessToken:
+      description: >
+        JWT encoded access Token. See Token Formats for more infos
+      type: string
+      format: JWT
+
+    RefreshToken:
+      description: >
+        JWT encoded refresh Token. See Token Formats for more infos
+      type: string
+      format: JWT
+
+    RegistrationToken:
+      description: >
+        JWT encoded registration Token. See Token Formats for more infos
+      type: string
+      format: JWT
+
+
+  x-token-formats:
+
+    JWTBase:
+      description: >
+        Base class of JWT payload containing registered claims used by tokens.
+      type: object
+      properties:
+        exp:
+          description: JWT registered claim of AccessToken expiration datetime
+          type: string
+          format: datetime
+        iat:
+          description: >
+            JWT registered claim designating the datetime when the token has been
+            generated.
+          type: string
+          format: datetime
+        jti:
+          description: >
+            JWT registered claim designating the JWT unique identifier.
+          type: string
+
+    AccessToken:
+      description: >
+        Authentication payload. Contains team information, scopes, user identity.
+        Has a very short lifetime and cannot be revoked.
+        It's validated locally as much as possible to avoid network overload
+      allOf:
+        - $ref: '#/components/x-token-formats/JWTBase'
+        - type: object
+          description: JWT extra registered claims
+          properties:
+            sub:
+              description: >
+                JWT registered claim designating the subject of the token.
+                Constant to 'access'
+              type: string
+              enum:
+                - access
+            aud:
+              description: >
+                JWT registered claim designating the audience of the token.
+                Stores the base64 encoded User-Agent used to request this token
+                creation at member's login.
+              type: string
+        - type: object
+          description: rbTeam user related payload
+          properties:
+            team:
+              description: Team slug of the token's owner
+              type: string
+              minLength: 2
+              maxLength: 64
+              pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+            member:
+              description: Team member's slug.
+              type: string
+              minLength: 2
+              maxLength: 64
+              pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+            scopes:
+              description: List of member's oAuth scopes
+              type: array
+              items:
+                type: string
+                enum:
+                  - chief
+                  - member
+
+    RefreshToken:
+      description: >
+        JWT payload for Refresh Tokens. Generated at member login
+      allOf:
+        - $ref: '#/components/x-token-formats/JWTBase'
+        - type: object
+          properties:
+            sub:
+              description: >
+                JWT registered claim designating the subject of the token.
+                Constant to 'refresh'
+              type: string
+              enum:
+                - refresh
+            aud:
+              description: >
+                JWT registered claim designating the audience of the token.
+                Stores the base64 encoded User-Agent used to request this token
+                creation at member's login.
+              type: string
+
+    RegistrationToken:
+      description: >
+        JWT payload for Registrtion Token. They are generated at member
+        login
+      allOf:
+        - $ref: '#/components/x-token-formats/JWTBase'
+        - type: object
+          properties:
+            sub:
+              description: >
+                JWT registered claim designating the subject of the token.
+                Constant to 'refresh'
+              type: string
+              enum:
+                - refresh
+            aud:
+              description: >
+                JWT registered claim designating the audience of the token.
+                Optional, stores the base64 encoded email address of the invited
+                user.
+              type: string
 
   schemas:
 
@@ -1760,7 +1982,7 @@ components:
             Team name
           type: string
           maxLength: 128
-          default: "Radio Bretzel Team"
+          default: 'Radio Bretzel Team'
         description:
           description: >
             Team decription, welcome text.
@@ -1787,7 +2009,7 @@ components:
       properties:
         slug:
           description: >
-            Member's "username" used as unique identifier, with email address.
+            Member's 'username' used as unique identifier, with email address.
           type: string
           minLength: 2
           maxLength: 64
@@ -1823,7 +2045,7 @@ components:
           items:
             type: string
           default:
-            - "member"
+            - 'member'
         disabled:
           description: >
             Set to true to disable the user
@@ -2068,8 +2290,6 @@ components:
         - content
         - edited
 
-
-
     Config:
       description: >
         Team main configuration object. This configuration is stored in database
@@ -2088,50 +2308,15 @@ components:
           type: integer
           minimum: 1
 
-    AccessToken:
-      description: >
-        oAuth payload encoded as JSON Web Token (JWT). Contains team information,
-        oAuth scopes, user identity.
-      type: object
-      properties:
-        team:
-          description: Team slug of the token's owner
-          type: string
-          minLength: 2
-          maxLength: 64
-          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
-        member:
-          description: Team member's slug.
-          type: string
-          minLength: 2
-          maxLength: 64
-          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
-        scopes:
-          description: List of member's oAuth scopes
-          type: array
-          items:
-            type: string
-            enum:
-              - chief
-              - member
 
     RegistrationToken:
       description: >
-        Registrations tokens are generated when chief wants to invite a new
-        member in the team. The future member will be allowed to register by providing
+        Registrations tokens are generated when chief wants to invite a new member
+        in the team. The future member will be allowed to register by providing
         the registration token chief will have sent to him.
-        Once a token has been used, it's deleted.
-      type: object
-      properties:
-        expires_on:
-          description: timestamp of token expiration datetime
-          type: string
-          format: datetime
-        payload:
-          description: >
-            SHA256 hash of the registration token. This is the part that will be given
-            to the new member asking him to authenticate.
-          type: string
+        These are one time use.
+      type: string
+      format: JWT
 
     Error:
       description: >
