@@ -1,5 +1,5 @@
 """
-    rbcore.source.model
+    rbteam.source.model
     ~~~~~~~~~~~~~~~~~~~
 
     This module handles every database operation for Radio Bretzel sources.
@@ -9,11 +9,11 @@
 
 from abc import ABCMeta, abstractmethod
 
-from rbcore.database import Model
-from rbcore.errors import SourceError, ValidationError, DatabaseError, DatabaseNotFound
-from rbcore.source import source as Source
-from rbcore.utils import formats
-from rbcore.utils.validations import validate
+from rbteam.database import Model
+from rbteam.errors import SourceError, ValidationError, DatabaseError, DatabaseNotFound
+from rbteam.source import source as Source
+from rbteam.utils import formats
+from rbteam.utils.validations import validate
 
 class Sources(Model):
     """ Source's model definition """

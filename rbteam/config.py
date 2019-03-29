@@ -1,5 +1,5 @@
 """
-    rbcore.config
+    rbteam.config
     ~~~~~~~~~~~~~
 
     This module describes configuration handling for Flask application.
@@ -12,8 +12,8 @@ import yaml
 
 from flask import Config
 
-from rbcore.errors import ConfigurationError
-from rbcore.utils.formats import get_prefixed_keys
+from rbteam.errors import ConfigurationError
+from rbteam.utils.formats import get_prefixed_keys
 
 
 class RBCoreConfig(Config):
@@ -23,7 +23,7 @@ class RBCoreConfig(Config):
 
     __DEFAULT = {
         'SITE_NAME': 'Radio Bretzel Core',
-        'OBJECTS_NAME_PREFIX': 'rbcore_',
+        'OBJECTS_NAME_PREFIX': 'rbteam_',
 
         'IS_CONTAINER': False,
 
@@ -31,7 +31,7 @@ class RBCoreConfig(Config):
         'DOCKER_VERSION': 'auto',
 
         'MONGO_HOST': 'localhost',
-        'MONGO_DATABASE': 'rbcore',
+        'MONGO_DATABASE': 'rbteam',
 
         'SOURCE_TYPE': 'docker',
         # DockerSource relative configuration
@@ -59,7 +59,7 @@ class RBCoreConfig(Config):
         'OBJECTS_NAME_PREFIX': 'radiobretzel_tests_',
 
         'MONGO_HOST': 'localhost',
-        'MONGO_DATABASE': 'rbcore_test',
+        'MONGO_DATABASE': 'rbteam_test',
 
         'STREAM_HOST': 'None',
         'STREAM_SOURCE_PASSWD': 'None',
@@ -84,12 +84,12 @@ class RBCoreConfig(Config):
         else:
             self.from_mapping(self.__DEVELOPMENT)
 
-        if config_file or os.environ.get('RBCORE_CONFIG_FILE'):
+        if config_file or os.environ.get('RBTEAM_CONFIG_FILE'):
             self.from_yaml(config_file)
 
-        env_variables = get_prefixed_keys(os.environ, 'RBCORE_', lowercase=False).get('matching')
+        env_variables = get_prefixed_keys(os.environ, 'RBTEAM_', lowercase=False).get('matching')
         if env_variables:
-            env_variables.pop('RBCORE_CONFIG_FILE', None)
+            env_variables.pop('RBTEAM_CONFIG_FILE', None)
             self.update(env_variables)
 
         if extra_config:

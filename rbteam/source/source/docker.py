@@ -1,8 +1,8 @@
 """
-    rbcore.source.source.docker
+    rbteam.source.source.docker
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    This module is an implementation of the rbcore.source Model for sources
+    This module is an implementation of the rbteam.source Model for sources
     run with docker.
 
     More info in documentation at https://docs.radiobretzel.org
@@ -14,10 +14,10 @@ from docker.errors import NotFound as DockerNotFound
 
 from flask import current_app as app
 
-from rbcore.docker import get_docker_client, get_docker_network
-from rbcore.errors import SourceError, SourceNotFound, DockerError
-from rbcore.source.source.base import BaseSource
-from rbcore.utils import formats
+from rbteam.docker import get_docker_client, get_docker_network
+from rbteam.errors import SourceError, SourceNotFound, DockerError
+from rbteam.source.source.base import BaseSource
+from rbteam.utils import formats
 
 class DockerSource(BaseSource):
     """DockerSource objects represent liquidsoap containers
@@ -27,7 +27,7 @@ class DockerSource(BaseSource):
     _cached_container_exp = datetime.min
 
     def __init__(self, name, **kwargs):
-        """DockerSource constructor. Refer to rbcore.source.model for arguments.
+        """DockerSource constructor. Refer to rbteam.source.model for arguments.
         """
         super().__init__(name, **kwargs)
         self._container_name = app.config['OBJECTS_NAME_PREFIX'] + 'source_' + self.name

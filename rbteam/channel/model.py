@@ -1,5 +1,5 @@
 """
-    rbcore.channel.model
+    rbteam.channel.model
     ~~~~~~~~~~~~~~~~~~~~
 
     This module describes the database representation and operations of the
@@ -10,12 +10,12 @@
 
 from abc import ABCMeta, abstractmethod
 
-from rbcore.database import Model
-from rbcore.errors import DatabaseError, DatabaseNotFound, SourceError
-from rbcore.source.model import Sources
-from rbcore.source import source as Source
-from rbcore.utils import formats
-from rbcore.utils.validations import validate
+from rbteam.database import Model
+from rbteam.errors import DatabaseError, DatabaseNotFound, SourceError
+from rbteam.source.model import Sources
+from rbteam.source import source as Source
+from rbteam.utils import formats
+from rbteam.utils.validations import validate
 
 class Channels(Model):
     """ Channel's model definition """

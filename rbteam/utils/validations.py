@@ -1,7 +1,7 @@
 import re, html
 from cerberus import Validator
 
-from rbcore.errors import ValidationError
+from rbteam.errors import ValidationError
 
 def validate(data, schema, mandatories=True, allow_unknown=False, **kwargs):
     """ Validate given data with given Schema. kwargs are passed to cerberus.Validator consructor """

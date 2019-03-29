@@ -1,5 +1,5 @@
 """
-    rbcore.docker
+    rbteam.docker
     ~~~~~~~~~~~~~
 
     This module handles docker connection and operations.
@@ -11,7 +11,7 @@ import docker
 
 from flask import current_app as app
 
-from rbcore.errors import DockerError
+from rbteam.errors import DockerError
 
 
 def get_docker_client():

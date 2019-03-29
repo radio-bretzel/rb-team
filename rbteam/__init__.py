@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    rbcore
+    rbteam
     ~~~~~~
 
     Radio Bretzel core application. It allows you to manage channels, sources,
@@ -13,5 +13,5 @@
 
 __version__ = '0.2.1'
 
-# rbcore module public interface
-from rbcore.app import create_app
+# rbteam module public interface
+from rbteam.app import create_app

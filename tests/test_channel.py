@@ -1,10 +1,10 @@
 import pytest
 
-import rbcore
+import rbteam
 
 def test_Channel(app):
     with app.app_context():
-        test_channel = rbcore.channel.model.Channel(**{
+        test_channel = rbteam.channel.model.Channel(**{
             'slug': 'test-channel',
             'description': 'This is a nice description'
         })
@@ -15,16 +15,16 @@ def test_Channel(app):
 
 def test_Channels_model(app):
     with app.app_context():
-        test_channel = rbcore.channel.model.Channels.create(**{'slug': 'test-channel-model'})
+        test_channel = rbteam.channel.model.Channels.create(**{'slug': 'test-channel-model'})
         assert test_channel.deleted == False
-        test_channel = rbcore.channel.model.Channels.find_one(**{'slug': 'test-channel-model'})
-        test_channel = rbcore.channel.model.Channels.update(test_channel, {'description': 'This is a nicer description'})
+        test_channel = rbteam.channel.model.Channels.find_one(**{'slug': 'test-channel-model'})
+        test_channel = rbteam.channel.model.Channels.update(test_channel, {'description': 'This is a nicer description'})
         assert test_channel.description == 'This is a nicer description'
-        soft_deleted_channel = rbcore.channel.model.Channels.delete('test-channel-model')
+        soft_deleted_channel = rbteam.channel.model.Channels.delete('test-channel-model')
         assert soft_deleted_channel.deleted == True
-        with pytest.raises(rbcore.errors.DatabaseNotFound) as e:
-            rbcore.channel.model.Channels.find_one(**{'slug': 'test-channel-model'})
-        test_channel = rbcore.channel.model.Channels.find_one(**{'slug': 'test-channel-model', 'deleted': 'true'})
-        rbcore.channel.model.Channels.delete(test_channel, hard_delete='true')
-        with pytest.raises(rbcore.errors.DatabaseNotFound) as e:
-            rbcore.channel.model.Channels.find_one(**{'slug': 'test-channel-model', 'deleted': 'true'})
+        with pytest.raises(rbteam.errors.DatabaseNotFound) as e:
+            rbteam.channel.model.Channels.find_one(**{'slug': 'test-channel-model'})
+        test_channel = rbteam.channel.model.Channels.find_one(**{'slug': 'test-channel-model', 'deleted': 'true'})
+        rbteam.channel.model.Channels.delete(test_channel, hard_delete='true')
+        with pytest.raises(rbteam.errors.DatabaseNotFound) as e:
+            rbteam.channel.model.Channels.find_one(**{'slug': 'test-channel-model', 'deleted': 'true'})

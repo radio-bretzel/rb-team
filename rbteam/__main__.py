@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    rbcore
+    rbteam
     ~~~~~~
 
     Alias for flask.run for the command-line
@@ -10,7 +10,7 @@
 """
 
 
-from rbcore.cli import main
+from rbteam.cli import main
 
 
 main()

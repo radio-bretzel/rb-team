@@ -1,6 +1,6 @@
 import pytest
 
-import rbcore
+import rbteam
 
 def test_default_routes(client):
     res = client.get('/')

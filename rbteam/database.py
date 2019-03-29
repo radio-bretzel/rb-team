@@ -1,5 +1,5 @@
 """
-    rbcore.database
+    rbteam.database
     ~~~~~~~~~~~~~~~
 
     This module handles database operations and the core data model.
@@ -12,7 +12,7 @@ import abc
 from flask import current_app as app
 from flask_pymongo import PyMongo
 
-from rbcore.errors import DatabaseError
+from rbteam.errors import DatabaseError
 
 
 def get_database():
@@ -25,7 +25,7 @@ def get_database():
             mongo_port = app.config.get('MONGO_PORT', 27017)
             mongo_user = app.config.get('MONGO_USER')
             mongo_passwd = app.config.get('MONGO_PASSWD')
-            mongo_database = app.config.get('MONGO_DATABASE', 'rbcore')
+            mongo_database = app.config.get('MONGO_DATABASE', 'rbteam')
             mongo_uri = 'mongodb://'
             if mongo_user:
                 mongo_uri += mongo_user
