@@ -125,6 +125,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/x-Views/TeamChief'
+
         '400':
           $ref: '#/components/responses/ValidationFailed'
         '401':
@@ -223,7 +224,6 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 
 
 
@@ -330,6 +330,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
 
 
   /profile:
@@ -1065,8 +1066,8 @@ paths:
     post:
       summary: Starts given channel's source
       description: >
-        Starts given channel's source. If channel's doesn't have a source, a
-        `404` HTTP error is returned.
+        Starts given channel's source. If channel's doesn't exists or doesn't 
+        have a source, a `404` HTTP error is returned.
       operationId: startChannelSource
       tags:
         - Sources
@@ -1082,8 +1083,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/x-Views/SourceChief'
-        '400':
-          $ref: '#/components/responses/ValidationFailed'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1134,7 +1133,6 @@ paths:
 
 
 
-# TODO
   /channel/{slug}/messages:
     get:
       summary: Returns a list of messages for the given channel
@@ -1220,7 +1218,11 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
 
+
   /message/{id}:
+    parameters:
+      - $ref: '#/components/parameters/MessageIdPath'
+
     put:
       summary: Edit an existing message
       description: >
@@ -1234,7 +1236,6 @@ paths:
           - member
 
       parameters:
-        - $ref: '#/components/parameters/MessageIdPath'
         - in: query
           name: 'content'
           description: >
@@ -1274,9 +1275,6 @@ paths:
       security:
         - TeamMembers:
           - member
-
-      parameters:
-        - $ref: '#/components/parameters/MessageIdPath'
 
       responses:
         '200':
@@ -1448,60 +1446,385 @@ components:
     #         admin:  Special scope for rbadmin module for multi-team administration
 
 
-  responses:
+  # Schemas are meant to be stored in database.
+  schemas:
 
-    ValidationFailed:
-      description: Some given arguments were incorrect
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    Unauthorized:
-      description: Access is restricted to logged users.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    Forbidden:
-      description: Access is refused due to unsufficient permissions
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    NotFound:
-      description: The resource asked was not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    Conflict:
+    Team:
       description: >
-        The resource could not be created because a resource with the given
-        identifier already exists
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+        Team Information. Accessible to members to read, chiefs only to write
+      type: object
+      properties:
+        name:
+          description: >
+            Team name
+          type: string
+          maxLength: 128
+          default: 'Radio Bretzel Team'
+        description:
+          description: >
+            Team decription, welcome text.
+          type: string
+          maxLength: 4096
+          default: >
+            Welcome to your Radio Bretzel Team ! Discover its channels and say
+            hi to your friends !
+        logo:
+          description: >
+            Team logo encoded in base64. Max size 128px*128px
+          type: string
+          format: base64
+          example: data:image/png;base64,izjeifJJEFIIEF9DAXZZxzafkegelXXKXO...
+        icon:
+          description: >
+            Team icon encoded in base64. Max size 32px*32px
+          type: string
+          format: base64
+          example: data:image/png;base64,iVBORw0KGgoAAAANzezrhjofzekGEKhtd...
 
-    SourceError:
-      description: The source operation went wrong
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+    Member:
+      description: >
+        Team Member object. Members are regular users in a team.
+      type: object
+      properties:
+        slug:
+          description: >
+            Member's 'username' used as unique identifier, with email address.
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+          example: john-doe
+        email:
+          description: >
+            Member's email address used as unique identifier with slug.
+          type: string
+          format: email
+          example: john@radiobretzel.org
+        password:
+          description: >
+            Member's salted password hash
+          type: string
+          format: sha512
+        salt:
+          description: >
+            Member's salt used to hash member's password
+          type: string
+        name:
+          description: >
+            Member's display name
+          type: string
+          minLength: 2
+          maxLength: 128
+          example: John Doe
+        description:
+          description: >
+            Member's description, bio, introduction text.
+          type: string
+          maxLength: 4096
+          example: Hi I'm John.
+        avatar:
+          description: >
+            Member's avatar, encoded in base64. Max size 128px*128px
+          type: string
+          format: base64
+          example: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAA...
+        scopes:
+          description: >
+            List of member's oauth scopes.
+          type: array
+          items:
+            type: string
+          default:
+            - 'member'
+        disabled:
+          description: >
+            Set to true to disable the user
+          type: boolean
+          default: false
+      required:
+        - slug
+        - email
 
-    InternalServerError:
-      description: Something went wrong on our side
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+    Channel:
+      description: >
+        Channels are rooms to chat and listen to music with friends
+      type: object
+      properties:
+        slug:
+          description: >
+            Channel unique identifier.
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+          example: jazz-n-groove
+        name:
+          description: >
+            Channel common name
+          type: string
+          maxLength: 128
+          example: Jazz & Groove
+        description:
+          description: >
+            Channel public description.
+          type: string
+          maxLength: 4096
+          example: Channel dedicated to Jazz and Funk music
+        archived:
+          description: >
+            Soft delete Channel attribute
+          type: boolean
+          default: false
+        source:
+          $ref: '#/components/schemas/Source'
+      required:
+        - slug
+        - archived
+
+    Source:
+      description: >
+        Sources represent audio streams
+      type: object
+      properties:
+        channel:
+          description: >
+            Parent channel's slug. It is used as a primary key, and set at creation
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+          example: jazz-n-groove
+        type:
+          description: >
+            Source type. Can be internal, as generated by Radio Bretzel, or
+            HTTP, as an exiting external stream.
+          type: string
+          enum:
+            - internal
+            - http
+          default: internal
+          readOnly: true
+        status:
+          description: >
+            Source status is dynamically retrieved. The way to retrieve this
+            status depends on the source engine (see `Source.config`).
+            When source is functionnal, its status is set to `playing`.
+            When source is disabled, its status is set to `stopped`.
+            If in any other case, the `dead` status should be used, and alerts
+            sent to chief in order
+          type: string
+          enum:
+            - playing
+            - stopped
+            - dead
+        endpoint:
+          description: >
+            Source public endpoint. This represents the url the user will use
+            to connect to the audio stream. It is automatically generated using
+            the `RBSTREAM_SERVER` and `RBSTREAM_PORT` configuration attributes
+            and `Source.channel` slug.
+          type: string
+          format: url
+          readOnly: true
+          example: https://team.radiobretzel.org/stream/jazz-n-groove
+        config:
+          description: >
+            Source configuration. This attribute is available to chief and admin
+            only, members are not allowed to view it. Check both types schemas
+            to learn more.
+          oneOf:
+            - $ref: '#/components/schemas/SourceInternal'
+            - $ref: '#/components/schemas/SourceHTTP'
+          discriminator:
+            propertyName: type
+            mapping:
+              internal: SourceInternal
+              http: SourceHTTP
+      required:
+        - channel
+        - config
+        - endpoint
+
+    SourceInternal:
+      description: >
+        Groups all internal sources engines. These can only be edited by admin
+        through team configuration.
+      allOf:
+        - type: object
+          required:
+            - engine
+          properties:
+            engine:
+              description: >
+                Source engine represents the way audio stream will be generated
+              type: string
+              enum:
+                - docker
+        - oneOf:
+          - $ref: '#/components/schemas/SourceInternalDocker'
+          discriminator:
+            propertyName: engine
+            mapping:
+              docker: '#/components/schemas/SourceInternalDocker'
+
+    SourceInternalDocker:
+      description: >
+        Handle an audio running in a docker container
+      type: object
+      required:
+        - docker_uri
+        - image
+      properties:
+        docker_uri:
+          type: string
+          description: >
+            The docker API endpoint. Loaded from team configuration
+          format: uri
+          readOnly: true
+          example: unix:///var/run/docker.sock
+        image:
+          type: string
+          description: >
+            Docker image name and tag. Loaded from team configuration
+          pattern: '^(?:.+\/)?([^:]+)(?::.+)?$'
+          readOnly: true
+          example: registry.radiobretzel.org/rb-src-liquidsoap:latest
+        container_id:
+          type: string
+          description: >
+            Source's Docker container id
+          readOnly: true
+        container_name:
+          type: string
+          description: >
+            Source's Docker container name
+          readOnly: true
+        command:
+          type: string
+          description: >
+            Docker command used at container's runtime
+          readOnly: true
+        environment:
+          type: object
+          description: >
+            Environment variables dictionnary loaded from team configuration.
+            Keys must be uppercase
+          properties:
+            RBSOURCE_CHANNEL_SLUG:
+              description: >
+                automatically set using `Source.channel`
+              type: string
+            RBSOURCE_RBTRACKMAN_URI:
+              description: >
+                automatically set using team configuration
+              type: string
+          additionalProperties:
+            type: string
+          required:
+            - RBSOURCE_CHANNEL_SLUG
+            - RBSOURCE_RBTRACKMAN_URI
+        networks:
+          type: array
+          description: >
+            Docker networks our source container should connect to, as an array
+            of Docker network names loaded from team configuration
+          items:
+            type: string
+          readOnly: true
+
+    SourceHTTP:
+      description: >
+        External HTTP existing source.
+      type: object
+      properties:
+        uri:
+          description: >
+            External HTTP audio stream url
+          type: string
+          format: url
+          example: https://s2.radio.co/sdf9aeb4e9/listen
+      required:
+        - uri
+
+    Message:
+      description: >
+        Text messages object.
+      type: object
+      properties:
+        _id:
+          description: Message unique identifier. Generated automatically
+          type: string
+          format: uuid
+        channel:
+          description: Channel's slug where message is attached.
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+          example: jazz-n-groove
+        author:
+          description: author's slug
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+          example: john-doe
+        sent_at:
+          description: message's sending datetime
+          type: string
+          format: datetime
+          readOnly: true
+          example: 2018-07-21T17:32:28Z
+        content:
+          description: body of the message
+          type: string
+          minLength: 1
+          maxLength: 4096
+          example: Wow ! I love this track !
+        edited:
+          description: Set at true if message have been edited
+          type: boolean
+          default: false
+      required:
+        - _id
+        - channel
+        - author
+        - sent_at
+        - content
+        - edited
+
+    Config:
+      description: >
+        Team main configuration object. This configuration is stored in database
+        and is updatable by admins (if this team is attached to a Radio Bretzel
+        Admin module)
+      type: object
+      properties:
+        members_limit:
+          description: >
+            Maximum number of members allowed to join the team.
+          type: integer
+          minimum: 1
+          default: 20
+        channels_limit:
+          description: >
+            Maximum number of channels allowed in the team.
+          type: integer
+          minimum: 1
+          default: 5
+
+    RegistrationToken:
+      description: >
+        Registrations tokens are generated when chief wants to invite a new member
+        in the team. The future member will be allowed to register by providing
+        the registration token chief will have sent to him.
+        These are one time use.
+      type: string
+      format: JWT
+      example: todo
 
 
+  # Every parameter should be validated
   parameters:
     MemberSlugPath:
       in: path
@@ -1660,26 +1983,58 @@ components:
       required: true
 
 
+  # Views are representations of schemas as recieved by members.
   x-Views:
     # Views
     TeamMember:
       description: View of team object for members
+      type: object
       allOf:
         - $ref: '#/components/schemas/Team'
+      example: 
+        name: Groovy Team
+        description: Dat team's so groovy.
+        logo: >
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI
+          [...]
+          EARBEARBEDQxa9b/Abowqb7ejVR+AAAAAElFTkSuQmCC
+        icon:
+          data:image/png;base64,zeijfEIGIJEencdeZUFZZDZJZi
+          [...]
+          EFEJECBEUCE/DEFIJXUEfebfXZjdfIZBZRS+CNZADZDC
 
     TeamChief:
       description: View of team object for chief
+      type: object
       allOf:
         - $ref: '#/components/schemas/Team'
         - type: object
           properties:
             config:
               $ref: '#/components/schemas/Config'
+      example:
+        name: Groovy Team
+        description: Dat team's so groovy.
+        logo: >
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI
+          [...]
+          EARBEARBEDQxa9b/Abowqb7ejVR+AAAAAElFTkSuQmCC
+        icon:
+          data:image/png;base64,zeijfEIGIJEencdeZUFZZDZJZi
+          [...]
+          EFEJECBEUCE/DEFIJXUEfebfXZjdfIZBZRS+CNZADZDC
+        config:
+          members_limit: 20
+          channels_limit: 5
 
     ConfigChief:
       description: View of config object for chief
-      allOf:
-        - $ref: '#/components/schemas/Config'
+      type: object
+      schema:
+        $ref: '#/components/schemas/Config'
+      example:
+        members_limit: 20
+        channels_limit: 5
 
     Profile:
       description: View of current member profile
@@ -1698,6 +2053,17 @@ components:
           format: base64
         is_chief:
           type: boolean
+      example:
+        slug: john-doe
+        email: john.doe@radiobretzel.org
+        name: John Doe
+        description: Hi I'm John
+        avatar: >
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI
+          [...]
+          EARBEARBEDQxa9b/Abowqb7ejVR+AAAAAElFTkSuQmCC
+        scopes:
+          - member
 
     MemberMember:
       description: View of a member of for members
@@ -1716,6 +2082,17 @@ components:
           format: base64
         is_chief:
           type: boolean
+      example:
+        slug: john-doe
+        email: john.doe@radiobretzel.org
+        name: John Doe
+        description: Hi I'm John
+        avatar: >
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI
+          [...]
+          EARBEARBEDQxa9b/Abowqb7ejVR+AAAAAElFTkSuQmCC
+        scopes:
+          - member
 
     MemberChief:
       description: View of a member for chief
@@ -1736,6 +2113,18 @@ components:
           type: boolean
         disabled:
           type: boolean
+      example:
+        slug: john-doe
+        email: john.doe@radiobretzel.org
+        disabled: false
+        name: John Doe
+        description: Hi I'm John
+        avatar: >
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI
+          [...]
+          EARBEARBEDQxa9b/Abowqb7ejVR+AAAAAElFTkSuQmCC
+        scopes:
+          - member
 
     ChannelMember:
       description: View of channel object for members
@@ -1748,16 +2137,15 @@ components:
         description:
           type: string
         source:
-          type: object
-          properties:
-            endpoint:
-              type: string
-            status:
-              type: string
-              enum:
-                - playing
-                - stopped
-                - dead
+          $ref: '#/components/x-Views/SourceMember'
+      example:
+        slug: jazz-n-groove
+        name: Jazz & Groove
+        description: Channel dedicated to Jazz and Funk music
+        source: 
+          endpoint: https://team.radiobretzel.org/stream/jazz-n-groove
+          type: internal
+          status: playing
 
     ChannelChief:
       description: View of channel object for chief
@@ -1773,27 +2161,17 @@ components:
         archived:
           type: boolean
         source:
-          type: object
-          properties:
-            type:
-              type: string
-              enum:
-                - internal
-                - http
-            endpoint:
-              type: string
-            status:
-              type: string
-              enum:
-                - playing
-                - stopped
-                - dead
-            config:
-              description: >
-                Only for external sources
-              oneOf:
-                - $ref: '#/components/schemas/SourceHTTP'
-
+          $ref: '#/components/x-Views/SourceChief'
+      example:
+        slug: jazz-n-groove
+        archived: false
+        name: Jazz & Groove
+        description: Channel dedicated to Jazz and Funk music
+        source:
+          endpoint: https://team.radiobretzel.org/stream/jazz-n-groove
+          type: internal
+          status: playing
+          
     SourceMember:
       description: View of source object for member
       type: object
@@ -1806,6 +2184,10 @@ components:
             - playing
             - stopped
             - dead
+      example:
+        endpoint: https://team.radiobretzel.org/stream/jazz-n-groove
+        type: internal
+        status: playing
 
     SourceChief:
       description: View of source object for chief
@@ -1829,6 +2211,10 @@ components:
             Only for external sources
           oneOf:
             - $ref: '#/components/schemas/SourceHTTP'
+      example:
+        endpoint: https://team.radiobretzel.org/stream/jazz-n-groove
+        type: internal
+        status: playing
 
     AfterLogin:
       description: View sent after member login
@@ -1844,22 +2230,70 @@ components:
         JWT encoded access Token. See Token Formats for more infos
       type: string
       format: JWT
+      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
 
     RefreshToken:
       description: >
         JWT encoded refresh Token. See Token Formats for more infos
       type: string
       format: JWT
+      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
 
     RegistrationToken:
       description: >
         JWT encoded registration Token. See Token Formats for more infos
       type: string
       format: JWT
+      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+    ValidationError:
+      type: array
+      description: >
+        List of validation errors, as objects. Keys represent parameters,
+        values are error message
+      items:
+        type: object
+        schema:
+          field:
+            description: parameter which failed validation
+            type: string
+          message:
+            description: error description
+            type: string
+      example:
+        - field: field_name
+          message: this parameter is required / not matching the required pattern
+
+  responses:
+
+    ValidationFailed:
+      description: Some given arguments were incorrect
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/x-Views/ValidationError'
+            
+    Unauthorized:
+      description: Access is restricted to logged users
+
+    Forbidden:
+      description: Access is refused due to unsufficient permissions
+
+    NotFound:
+      description: The resource asked was not found
+
+    Conflict:
+      description: >
+        The resource could not be created because a resource with the given
+        identifier already exists
+
+    InternalServerError:
+      description: >
+        Something went wrong on our side. If this message persists,
+        please contact your Radio Bretzel admininstrator
 
 
   x-token-formats:
-
     JWTBase:
       description: >
         Base class of JWT payload containing registered claims used by tokens.
@@ -1970,367 +2404,3 @@ components:
                 user.
               type: string
 
-  schemas:
-
-    Team:
-      description: >
-        Team Information. Accessible to members to read, chiefs only to write
-      type: object
-      properties:
-        name:
-          description: >
-            Team name
-          type: string
-          maxLength: 128
-          default: 'Radio Bretzel Team'
-        description:
-          description: >
-            Team decription, welcome text.
-          type: string
-          maxLength: 4096
-          default: >
-            Welcome to your Radio Bretzel Team ! Discover its channels and say
-            hi to your friends !
-        logo:
-          description: >
-            Team logo encoded in base64. Max size 128px*128px
-          type: string
-          format: base64
-        icon:
-          description: >
-            Team icon encoded in base64. Max size 32px*32px
-          type: string
-          format: base64
-
-    Member:
-      description: >
-        Team Member object. Members are regular users in a team.
-      type: object
-      properties:
-        slug:
-          description: >
-            Member's 'username' used as unique identifier, with email address.
-          type: string
-          minLength: 2
-          maxLength: 64
-          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
-        email:
-          description: >
-            Member's email address used as unique identifier with slug.
-          type: string
-          format: email
-        password:
-          description: >
-            Member's password
-        name:
-          description: >
-            Member's display name
-          type: string
-          minLength: 2
-          maxLength: 128
-        description:
-          description: >
-            Member's description, bio, introduction text.
-          type: string
-          maxLength: 4096
-        avatar:
-          description: >
-            Member's avatar, encoded in base64. Max size 128px*128px
-          type: string
-          format: base64
-        scopes:
-          description: >
-            List of member's oauth scopes.
-          type: array
-          items:
-            type: string
-          default:
-            - 'member'
-        disabled:
-          description: >
-            Set to true to disable the user
-          type: boolean
-          default: false
-      required:
-        - slug
-        - email
-
-    Channel:
-      description: >
-        Channels are rooms to chat and listen to music with friends
-      type: object
-      properties:
-        slug:
-          description: >
-            Channel unique identifier.
-          type: string
-          minLength: 2
-          maxLength: 64
-          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
-        name:
-          description: >
-            Channel common name
-          type: string
-          maxLength: 128
-        description:
-          description: >
-            Channel public description.
-          type: string
-          maxLength: 4096
-        archived:
-          description: >
-            Soft delete Channel attribute
-          type: boolean
-          default: false
-        source:
-          $ref: '#/components/schemas/Source'
-      required:
-        - slug
-        - archived
-
-    Source:
-      description: >
-        Sources represent audio streams
-      type: object
-      properties:
-        channel:
-          description: >
-            Parent channel's slug. It is used as a primary key
-          type: string
-          minLength: 2
-          maxLength: 64
-          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
-        type:
-          description: >
-            Source type. Can be internal, as generated by Radio Bretzel, or
-            HTTP, as an exiting external stream.
-          type: string
-          enum:
-            - internal
-            - http
-          default: internal
-        status:
-          description: >
-            Source status is dynamically retrieved. The way to retrieve this
-            status depends on the source engine (see `Source.config`).
-            When source is functionnal, its status is set to `playing`.
-            When source is disabled, its status is set to `stopped`.
-            If in any other case, the `dead` status should be used, and alerts
-            sent to chief in order
-          type: string
-          enum:
-            - playing
-            - stopped
-            - dead
-        endpoint:
-          description: >
-            Source public endpoint. This represents the url the user will use
-            to connect to the audio stream. It is automatically generated using
-            the `RBSTREAM_SERVER` and `RBSTREAM_PORT` configuration attributes
-            and `Source.channel` slug.
-          type: string
-          format: url
-        config:
-          description: >
-            Source configuration. This attribute is available to chief and admin
-            only, members are not allowed to view it. Check both types schemas
-            to learn more.
-          oneOf:
-            - $ref: '#/components/schemas/SourceInternal'
-            - $ref: '#/components/schemas/SourceHTTP'
-          discriminator:
-            propertyName: type
-            mapping:
-              internal: SourceInternal
-              http: SourceHTTP
-      required:
-        - channel
-        - config
-        - endpoint
-
-    SourceInternal:
-      description: >
-        Groups all internal sources engines. These can only be edited by admin
-        through team configuration.
-      allOf:
-        - type: object
-          required:
-            - engine
-          properties:
-            engine:
-              description: >
-                Source engine represents the way audio stream will be generated
-              type: string
-              enum:
-                - docker
-        - oneOf:
-          - $ref: '#/components/schemas/SourceInternalDocker'
-          discriminator:
-            propertyName: engine
-            mapping:
-              docker: '#/components/schemas/SourceInternalDocker'
-
-    SourceInternalDocker:
-      description: >
-        Handle an audio running in a docker container
-      type: object
-      required:
-        - docker_uri
-        - image
-      properties:
-        docker_uri:
-          type: string
-          description: >
-            The docker API endpoint. Loaded from team configuration
-          format: uri
-          readOnly: true
-        image:
-          type: string
-          description: >
-            Docker image name and tag. Loaded from team configuration
-          pattern: '^(?:.+/)?([^:]+)(?::.+)?$'
-          readOnly: true
-        container_id:
-          type: string
-          description: >
-            Source's Docker container id
-          readOnly: true
-        container_name:
-          type: string
-          description: >
-            Source's Docker container name
-          readOnly: true
-        command:
-          type: string
-          description: >
-            Docker command used at container's runtime
-          readOnly: true
-        environment:
-          type: object
-          description: >
-            Environment variables dictionnary loaded from team configuration
-          properties:
-            RBSOURCE_CHANNEL_SLUG:
-              description: >
-                automatically set using `Source.channel`
-              type: string
-            RBSOURCE_RBTRACKMAN_URI:
-              description: >
-                automatically set using team configuration
-              type: string
-          additionalProperties:
-            type: string
-          required:
-            - RBSOURCE_CHANNEL_SLUG
-            - RBSOURCE_RBTRACKMAN_URI
-        networks:
-          type: array
-          description: >
-            Docker networks our source container should connect to, as an array
-            of Docker network names loaded from team configuration
-          items:
-            type: string
-          readOnly: true
-
-    SourceHTTP:
-      description: >
-        External HTTP existing source.
-      type: object
-      properties:
-        uri:
-          description: >
-            External HTTP audio stream url
-          type: string
-          format: url
-      required:
-        - uri
-
-    Message:
-      description: >
-        Text messages object.
-      type: object
-      properties:
-        _id:
-          description: Message unique identifier. Generated automatically
-          type: string
-          format: uuid
-        channel:
-          description: Channel's slug where message is attached.
-          type: string
-          minLength: 2
-          maxLength: 64
-          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
-          readOnly: true
-        author:
-          description: author's slug
-          type: string
-          minLength: 2
-          maxLength: 64
-          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
-          readOnly: true
-        sent_at:
-          description: message's sending datetime
-          type: string
-          format: datetime
-          readOnly: true
-        content:
-          description: body of the message
-          type: string
-          minLength: 1
-          maxLength: 4096
-        edited:
-          description: Set at true if message have been edited
-          type: boolean
-          default: false
-      required:
-        - _id
-        - channel
-        - author
-        - sent_at
-        - content
-        - edited
-
-    Config:
-      description: >
-        Team main configuration object. This configuration is stored in database
-        and is updatable by admins (if this team is attached to a Radio Bretzel
-        Admin module)
-      type: object
-      properties:
-        members_limit:
-          description: >
-            Maximum number of members allowed to join the team.
-          type: integer
-          minimum: 1
-        channels_limit:
-          description: >
-            Maximum number of channels allowed in the team.
-          type: integer
-          minimum: 1
-
-
-    RegistrationToken:
-      description: >
-        Registrations tokens are generated when chief wants to invite a new member
-        in the team. The future member will be allowed to register by providing
-        the registration token chief will have sent to him.
-        These are one time use.
-      type: string
-      format: JWT
-
-    Error:
-      description: >
-        Standard Radio Bretzel Core error.
-      type: object
-      properties:
-        code:
-          description: >
-            HTTP error code
-          type: string
-        message:
-          description: >
-            Error message. Can be string or object, depending of the error
-          type: string
-      required:
-        - code
-        - message
