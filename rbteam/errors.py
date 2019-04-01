@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-    rbcore.errors
+    rbteam.errors
     ~~~~~~~~~~~~~
 
-    All rbcore specific Exceptions are registerd in this module.
+    All rbteam specific Exceptions are registerd in this module.
 
     More info in documentation at https://docs.radiobretzel.org
 """

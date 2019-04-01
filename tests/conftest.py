@@ -1,11 +1,11 @@
 import pytest
 
-import rbcore
+import rbteam
 
 
 @pytest.fixture
 def app():
-    return rbcore.create_app('test')
+    return rbteam.create_app('test')
 
 @pytest.fixture
 def client(app):

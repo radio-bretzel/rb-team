@@ -1,5 +1,5 @@
 """
-    rbcore.source.source
+    rbteam.source.source
     ~~~~~~~~~~~~~~~~~~~~
 
     This module hosts every radio bretzel source type. All its modules can
@@ -10,7 +10,7 @@
 
 from flask import current_app as app
 
-from rbcore.source.source.docker import DockerSource
+from rbteam.source.source.docker import DockerSource
 
 
 def init(name, type=None, **kwargs):

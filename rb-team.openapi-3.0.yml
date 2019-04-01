@@ -1,0 +1,2406 @@
+openapi: '3.0.0'
+info:
+  description: >
+    Radio Bretzel teams are group of people sharing music and chating about it !
+    This module called rbTeam comes with two other base components,
+    rbTrackman and rbStream, which together form Radio Bretzel !
+    RbTeam module handles music sources, chat rooms, member profile, authentication
+    and authorization.
+  version: '0.9.0'
+  title: 'Radio Bretzel Team API reference'
+  contact:
+    email: 'radiobretzel@ntymail.com'
+  license:
+    name: 'GPL-3.0'
+    url: 'https://www.gnu.org/licenses/gpl-3.0.html'
+
+tags:
+  - name: Team
+    description: >
+      Manage your Radio Bretzel team !
+  - name: Authentication
+    description: >
+      Handling of sessions and authorizations
+  - name: Members
+    description: >
+      Team members are people like you and me sharing their music
+  - name: Channels
+    description: >
+      Channels are rooms to chat and listen to music with friends !
+  - name: Sources
+    description: >
+      Sources are process creating the audio that will be streamed
+  - name: Messages
+    description: >
+      Chat operations
+  # - name: Admin
+  #   description: >
+  #     Restricted admin area
+
+
+
+
+paths:
+
+  /team:
+    summary: Instance information
+
+    get:
+      summary: Returns information about Team
+      description: >
+        Returns basic information about the Team.
+      operationId: getTeam
+      tags:
+        - Team
+
+      security:
+        - TeamMembers:
+          - member
+
+      responses:
+        '200':
+          description: Team object regarding scope
+          content:
+            application/json:
+              schema:
+                oneOf:
+                 - $ref: '#/components/x-Views/TeamMember'
+                 - $ref: '#/components/x-Views/TeamChief'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    put:
+      summary: Update information about Team
+      description: >
+        Allow chief to update the current Team information
+      operationId: updateTeam
+      tags:
+        - Team
+
+      security:
+        - TeamMembers:
+          - chief
+
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  description: >
+                    Team name
+                  type: string
+                  maxLength: 128
+                description:
+                  description: >
+                    Team description
+                  type: string
+                  maxLength: 4096
+                logo:
+                  description: >
+                    Team logo encoded in base64. Max 128px*128px
+                  type: string
+                  format: base64
+                icon:
+                  description: >
+                    Team icon encoded in base64. Max 32px*32px
+                  type: string
+                  format: base64
+            encoding:
+              logo:
+                contentType: image/jpeg, image/png
+              icon:
+                contentType: image/jpeg, image/png
+
+      responses:
+        '200':
+          description: Updated team object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/TeamChief'
+
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /team/invite:
+    post:
+      summary: Allow Chief to invite a new member
+      description: >
+        Allow Chief to create a registration token. This token will be used by a
+        new member to register.
+      operationId: invite
+      tags:
+        - Team
+
+      security:
+        - TeamMembers:
+          - chief
+
+      responses:
+        '200':
+          description: Registration Token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/RegistrationToken'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /team/config:
+    summary: Access to Team configuration
+
+    get:
+      summary: Returns a few information about team configuration
+      description: >
+        Allow chief to view Team configuration
+      operationId: getTeamConfig
+      tags:
+        - Team
+
+      security:
+        - TeamMembers:
+          - chief
+
+      responses:
+        '200':
+          description: Team config object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/ConfigChief'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /auth/login:
+    post:
+      summary: Authenticates a member and returns session tokens
+      description: >
+        Member's login endpoint. One of Member's slug or email is required.
+        Returns an oAuth token containg access and refresh JSON Web Tokens.
+      operationId: loginMember
+      tags:
+        - Authentication
+
+      parameters:
+        - $ref: '#/components/parameters/MemberSlugQuery'
+        - $ref: '#/components/parameters/MemberEmailQuery'
+        - $ref: '#/components/parameters/MemberPasswordQuery'
+
+      responses:
+        '200':
+          description: Access and Refresh Tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/AfterLogin'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /auth/logout:
+    post:
+      summary: Logs out the current Member
+      description: >
+        Logs out the current Member, revoking access and refresh tokens.
+      operationId: logoutMember
+      tags:
+        - Authentication
+
+      security:
+        - TeamMembers:
+          - members
+
+      responses:
+        '200':
+          description: Member successfully logged out
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /auth/validate_token:
+    post:
+      summary: Validates a token for rbTrackman and rbStream apps.
+      description: >
+        rbTeam show up as a authorization server for rbTrackman and rbStream
+        clients.
+      operationId: validateToken
+      tags:
+        - Authentication
+
+      security:
+        - RadioBretzelApps:
+          - rbTrackman
+          - rbStream
+
+      parameters:
+        - in: query
+          name: 'token'
+          description: >
+            JWT to validate
+          schema:
+            type: string
+            format: JWT
+
+      responses:
+        '200':
+          description: Token validated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /auth/refresh_token:
+    post:
+      summary: asks for a new access token against a refresh token.
+      description: >
+        This method accepts a refresh token as parameter and returns a access token
+        if valid.
+      operationId: refreshToken
+      tags:
+        - Authentication
+
+      security:
+        - TeamMebers:
+          - member
+          - chief
+        - RadioBretzelApps:
+          - rbTrackman
+          - rbStream
+
+      parameters:
+        - in: query
+          name: 'refresh_token'
+          description: >
+            Refresh token to be validated for a new access token
+          schema:
+            type: string
+            format: JWT
+
+      responses:
+        '200':
+          description: New Access Token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/AccessToken'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /profile:
+    summary: Handles member's profile
+
+    get:
+      summary: Returns current member's profile
+      description: >
+        Returns connected member's profile.
+      operationId: getProfile
+      tags:
+        - Members
+
+      security:
+        - TeamMembers:
+          - member
+
+      responses:
+        '200':
+          description: Current member's profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/Profile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    put:
+      summary: Updates current member's profile
+      description: >
+        Update the currently connected member's profile
+      operationId: updateProfile
+      tags:
+        - Members
+
+      security:
+        - TeamMembers:
+          - member
+
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                email:
+                  description: >
+                    Member's email address
+                  type: string
+                  format: email
+                name:
+                  description: >
+                    Member's name
+                  type: string
+                  maxLength: 128
+                password:
+                  description: >
+                    Member's password
+                  type: string
+                  format: password
+                description:
+                  description: >
+                    Member's description, bio
+                  type: string
+                  maxLength: 4096
+                avatar:
+                  description: >
+                    Member's avatar encoded in base64. Max size 128px*128px
+                  type: string
+                  format: base64
+
+      responses:
+        '200':
+          description: Current member's updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/Profile'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    delete:
+      summary: Delete current member
+      description: >
+        Delete the current member's account. Implies logout.
+      operationId: deleteProfile
+      tags:
+        - Members
+
+      security:
+        - TeamMembers:
+          - member
+
+      parameters:
+        - in: query
+          name: 'password'
+          description: >
+            Member's password should be provided in order to confirm deletion
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: Member has been successfully deleted
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /members:
+    summary: Get a list of team members
+
+    get:
+      summary: Returns a list of members matching the given filters
+      description: >
+        Returns a list of team members from the given filters.
+      operationId: getMembers
+      tags:
+        - Members
+
+      security:
+        - TeamMembers:
+          - members
+
+      parameters:
+        - in: query
+          name: 'slug'
+          description: >
+            Filter user by slug. Prefer HTTP GET /member/slug
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+            pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+        - $ref: '#/components/parameters/MemberEmailQuery'
+        - $ref: '#/components/parameters/MemberNameQuery'
+        - $ref: '#/components/parameters/MemberScopesQuery'
+
+      responses:
+        '200':
+          description: List of team members matching the given filters
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/x-Views/MemberMember'
+                  - type: array
+                    items:
+                      $ref: '#/components/x-Views/MemberChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /member/register:
+    post:
+      summary: Register a new member against a registration token
+      description: >
+        Register a new team member. This member must provide a registration token.
+      operationId: registerMember
+      tags:
+        - Members
+
+      parameters:
+        - in: query
+          name: 'registration_token'
+          description: >
+            Registration token. It's generated by chief invitation. This is a one-time password
+            in order to verify the registrating user has been invited.
+          schema:
+            type: string
+            format: JWT
+          required: true
+        - in: query
+          name: 'slug'
+          description: >
+            Team Member slug. This slug must be alphanumeric and lowercase only. It
+            can contain but can't start nor end with one or two max dashes (-).
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+            pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+          required: true
+        - in: query
+          name: 'email'
+          description: >
+            Team Member email address
+          schema:
+            type: string
+            format: email
+          required: true
+        - $ref: '#/components/parameters/MemberPasswordQuery'
+
+      responses:
+        '200':
+          description: New member's profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/Profile'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /member/{slug}:
+    summary: Handles a single member designated by its slug
+
+    get:
+      summary: Returns Member's profile
+      description: >
+        Returns the profile of the member corresponding to the given slug
+      operationId: getMember
+      tags:
+        - Members
+
+      security:
+        - TeamMembers:
+          - members
+
+      parameters:
+        - $ref: '#/components/parameters/MemberSlugPath'
+
+      responses:
+        '200':
+          description: Member's profile
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/x-Views/MemberMember'
+                  - $ref: '#/components/x-Views/MemberChief'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    put:
+      summary: Updates Member's object
+      description: >
+        Returns the updated Member's object.
+      operationId: updateMember
+      tags:
+        - Members
+
+      security:
+        - TeamMembers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/MemberSlugPath'
+        - in: query
+          name:  disabled
+          description: >
+            Set to true to disable member
+          schema:
+            type: boolean
+
+      responses:
+        '200':
+          description: Member's profile
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/x-Views/MemberMember'
+                  - $ref: '#/components/x-Views/MemberChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    delete:
+      summary: Delete member
+      description: >
+        Delete member object
+      operationId: deleteMember
+      tags:
+        - Members
+
+      security:
+        - TeamMembers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/MemberSlugPath'
+
+      responses:
+        '200':
+          description: Member has been successfully deleted
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /channels:
+    summary: List channels objects
+
+    get:
+      summary: Return a list of all channels matching the given filters
+      description: >
+        Returns a list of channels from the given filters. If user is chief,
+        it would obtain complete information about channels. If user is only a
+        member, it would obtain some reduced information. See parameters for
+        more details
+      operationId: getChannels
+      tags:
+        - Channels
+
+      security:
+        - TeamMembers:
+          - member
+
+      parameters:
+        - in: query
+          name: 'slug'
+          description: >
+            Filter channels by slug. This slug must be alphanumeric and lowercase
+            only. It can contain but can't start nor end with one or two max
+            dashes (-). Prefer HTTP GET `/channel/{slug}`
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 64
+            pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+        - $ref: '#/components/parameters/ChannelNameQuery'
+        - $ref: '#/components/parameters/ChannelArchivedQuery'
+
+      responses:
+        '200':
+          description: List of all channels of the team from the given filters
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/x-Views/ChannelMember'
+                - type: array
+                  items:
+                    $ref: '#/components/x-Views/ChannelChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /channel/{slug}:
+    summary: Handles a channel
+
+    parameters:
+      - $ref: '#/components/parameters/ChannelSlugPath'
+
+    get:
+      summary: Return the channel object corresponding to the given slug
+      description: >
+        Return the channel object corresponding to the given slug. If user is chief,
+        it would obtain complete information about channels. If user is only a member, it
+        would obtain some reduced information. See parameters for more details
+      operationId: getChannelBySlug
+      tags:
+        - Channels
+
+      security:
+        - TeamMembers:
+          - member
+
+      responses:
+        '200':
+          description: Channel object corresponding to the given slug
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/x-Views/ChannelMember'
+                  - $ref: '#/components/x-Views/ChannelChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    post:
+      summary: Create a new channel
+      description: >
+        Create a new channel with the given arguments. If no name is given, slug
+        will be used by default. Slug must be unique, and passing an already
+        existing slug as an argument will result by a `409 - Conflict` HTTP response.
+      tags:
+        - Channels
+
+      security:
+        - TeamMembers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelNameQuery'
+        - $ref: '#/components/parameters/ChannelDescriptionQuery'
+
+      responses:
+        '201':
+          description: 'Channel was successfully created'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/ChannelChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    put:
+      summary: Update an existing channel information
+      description: >
+        Update an existing channel information from the given args, and return
+        the updated channel object.
+      operationId: updateChannel
+      tags:
+        - Channels
+
+      security:
+        - TeamMembers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelNameQuery'
+        - $ref: '#/components/parameters/ChannelDescriptionQuery'
+        - $ref: '#/components/parameters/ChannelArchivedQuery'
+
+      responses:
+        '200':
+          description: Updated channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/ChannelChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    delete:
+      summary: Delete the channel object corresponding to the given slug
+      description: >
+        Delete the channel object corresponding to the given slug.
+      operationId: deleteChannel
+      tags:
+        - Channels
+
+      security:
+        - TeamMembers:
+          - chief
+
+      responses:
+        '200':
+          description: Deleted channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/ChannelChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /sources:
+    summary: List sources objects
+
+    get:
+      summary: Return a list of all sources matching the given filters
+      description: >
+        Returns a list of sources from the given filters.
+      operationId: getSources
+      tags:
+        - Sources
+
+      security:
+        - TeamMembers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/SourceTypeQuery'
+        - $ref: '#/components/parameters/SourceStatusQuery'
+
+      responses:
+        '200':
+          description: List of all sources of the team from the given filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/x-Views/SourceChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /channel/{slug}/source:
+    summary: Handles a specific channel's source
+
+    parameters:
+      - $ref: '#/components/parameters/ChannelSlugPath'
+
+    get:
+      summary: Retrieve specific channel's source information
+      description: >
+        Returns an object corresponding to the given channel's source. If user
+        is only member, it will recieve some reduced information.
+      operationId: getChannelSource
+      tags:
+        - Sources
+
+      security:
+        - TeamMembers:
+          - member
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+
+      responses:
+        '200':
+          description: Source's object of the given channel
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/x-Views/SourceMember'
+                - type: array
+                  items:
+                    $ref: '#/components/x-Views/SourceChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    post:
+      summary: Create source for the given channel
+      description: >
+        Create a new source object for the given channel. Sources are unique and
+        cannot exist without a channel. If the specified channel already has a
+        source, or if a source with this name already exists, a `409 - Conflict`
+        HTTP error is responded.
+      operationId: createChannelSource
+      tags:
+        - Sources
+
+      security:
+        - TeamMembers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/SourceTypeQuery'
+        - in: query
+          name: 'engine'
+          description: >
+            For external source only. Will be ignored otherwise.
+            Subtype of external audio stream
+          schema:
+            type: string
+            enum:
+              - http
+        - in: query
+          name: 'uri'
+          description: >
+            For external HTTP source only. Will be ignored otherwise.
+            External stream URI
+          schema:
+            type: string
+            format: url
+
+      responses:
+        '200':
+          description: Source's object corresponding to the given channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/SourceChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    delete:
+      summary: Delete the source of the given channel
+      description: >
+        Delete the source of the specified channel.
+      operationId: deleteChannelSource
+      tags:
+        - Sources
+
+      security:
+        - TeamMembers:
+          - chief
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+
+      responses:
+        '200':
+          description: Deleted source object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/SourceChief'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /channel/{slug}/source/start:
+    summary: Starts given channel's source
+
+    parameters:
+      - $ref: '#/components/parameters/ChannelSlugPath'
+
+    post:
+      summary: Starts given channel's source
+      description: >
+        Starts given channel's source. If channel's doesn't exists or doesn't 
+        have a source, a `404` HTTP error is returned.
+      operationId: startChannelSource
+      tags:
+        - Sources
+
+      security:
+        - TeamMembers:
+          - chief
+
+      responses:
+        '200':
+          description: Source's object corresponding to the given slug
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/SourceChief'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /channel/{slug}/source/stop:
+    summary: Stops given channel's source
+
+    parameters:
+      - $ref: '#/components/parameters/ChannelSlugPath'
+
+    post:
+      summary: Stops given channel's source
+      description: >
+        Stops given channel's source. If channel's doesn't have a source, a
+        `404` HTTP error is returned.
+      operationId: stopChannelSource
+      tags:
+        - Sources
+
+      security:
+        - TeamMembers:
+          - chief
+
+      responses:
+        '200':
+          description: Channel's object corresponding to the given slug
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-Views/SourceChief'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /channel/{slug}/messages:
+    get:
+      summary: Returns a list of messages for the given channel
+      description: >
+        Returns by default the last 50 messages published on this channel.
+      operationId: getChannelMessages
+      tags:
+        - Messages
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+        - in: query
+          name: 'limit'
+          description: >
+            Max number of messages returned by the query. Use it for pagination
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 30
+        - in: query
+          name: 'offset_date'
+          description: >
+            Returns messages from the given date. Default to 'now'
+          schema:
+            type: string
+            format: date
+
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Send a message on channel's chat
+      description: >
+        Send a message on channel's chat
+      operationId: postChannelMessages
+      tags:
+        - Messages
+
+      security:
+        - TeamMembers:
+          - members
+
+      parameters:
+        - $ref: '#/components/parameters/ChannelSlugPath'
+        - in: query
+          name: 'content'
+          description: Message's body
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 4096
+
+      responses:
+        '201':
+          description: Message successfully sent
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  /message/{id}:
+    parameters:
+      - $ref: '#/components/parameters/MessageIdPath'
+
+    put:
+      summary: Edit an existing message
+      description: >
+        Allow Chief or message's owner to edit a message
+      operationId: editMessage
+      tags:
+        - Messages
+
+      security:
+        - TeamMembers:
+          - member
+
+      parameters:
+        - in: query
+          name: 'content'
+          description: >
+            Message content
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 4096
+
+      responses:
+        '200':
+          description: Updated Message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+    delete:
+      summary: Remove an existing message
+      description: >
+        Allow Chief or message's owner to delete a message
+      operationId: deleteMessage
+      tags:
+        - Messages
+
+      security:
+        - TeamMembers:
+          - member
+
+      responses:
+        '200':
+          description: The message has been successfully deleted
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+
+  # Will be implemented later
+  # /admin:
+  #   summary: Team administration endpoint
+  #
+  #   get:
+  #     summary: Get detailed information about team
+  #     description: >
+  #       Returns a dictionnary containing all information relative to the current
+  #       team
+  #     operationId: getAdmin
+  #     tags:
+  #       - Admin
+  #     security:
+  #       - RadioBretzelAdmin:
+  #         - admin
+  #
+  #     responses:
+  #       '200':
+  #         description: List of all sources of the team from the given filters
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: array
+  #               items:
+  #                 $ref: '#/components/schemas/Source'
+  #       '400':
+  #         $ref: '#/components/responses/ValidationFailed'
+  #       '401':
+  #         $ref: '#/components/responses/Unauthorized'
+  #       '403':
+  #         $ref: '#/components/responses/Forbidden'
+  #       '404':
+  #         $ref: '#/components/responses/NotFound'
+  #       '500':
+  #         $ref: '#/components/responses/InternalServerError'
+  #
+  #
+  #
+  # /admin/sources:
+  #   summary: List sources objects
+  #
+  #   get:
+  #     summary: Return a list of all sources matching the given filters
+  #     description: >
+  #       Returns a list of sources from the given filters.
+  #     operationId: adminGetSources
+  #     tags:
+  #       - Admin
+  #
+  #     security:
+  #       - RadioBretzelAdmin:
+  #         - admin
+  #
+  #     parameters:
+  #       - $ref: '#/components/parameters/SourceTypeQuery'
+  #       - $ref: '#/components/parameters/SourceStatusQuery'
+  #
+  #     responses:
+  #       '200':
+  #         description: List of all sources of the team from the given filters
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: array
+  #               items:
+  #                 $ref: '#/components/schemas/Source'
+  #       '400':
+  #         $ref: '#/components/responses/ValidationFailed'
+  #       '401':
+  #         $ref: '#/components/responses/Unauthorized'
+  #       '403':
+  #         $ref: '#/components/responses/Forbidden'
+  #       '404':
+  #         $ref: '#/components/responses/NotFound'
+  #       '500':
+  #         $ref: '#/components/responses/InternalServerError'
+  #
+  #
+  #
+  # /admin/source/{channel}:
+  #   summary: Handles the given source
+  #
+  #   parameters:
+  #     - $ref: '#/components/parameters/SourceChannelPath'
+  #
+  #   get:
+  #     summary: Get info about the given source
+  #     description: >
+  #       Returns information about the given source.
+  #     operationId: getAdminSource
+  #     tags:
+  #       - Admin
+  #
+  #     security:
+  #       - RadioBretzelAdmin:
+  #         - admin
+  #
+  #     responses:
+  #       '200':
+  #         description: Source information
+  #         content:
+  #           application/json:
+  #             schema:
+  #               allOf:
+  #                 - $ref: '#/components/schemas/Source'
+  #                 - type: object
+  #                   properties:
+  #                     current_listeners:
+  #                       type: integer
+  #
+  #       '400':
+  #         $ref: '#/components/responses/ValidationFailed'
+  #       '401':
+  #         $ref: '#/components/responses/Unauthorized'
+  #       '403':
+  #         $ref: '#/components/responses/Forbidden'
+  #       '404':
+  #         $ref: '#/components/responses/NotFound'
+  #       '500':
+  #         $ref: '#/components/responses/InternalServerError'
+
+
+
+
+components:
+  securitySchemes:
+
+    TeamMembers:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Team scoped authentication for members. JWTs used as access tokens provide
+        scopes used as roles.
+
+    RadioBretzelApps:
+      type: apiKey
+      in: header
+      name: 'X-RBTEAM-API-KEY'
+      description: >
+        rbTrackman, rbStream dedicated authentication. Used for token validation
+
+    # RadioBretzelAdmin:
+    #   type: oauth2
+    #   description: >
+    #     rbAdmin module authorization flow. Handles admin space authorization.
+    #   flows:
+    #     password:
+    #       tokenUrl: https://rbadmin/oauth/token
+    #       refreshUrl: https://rbadmin/oauth/refresh_token
+    #       scopes:
+    #         admin:  Special scope for rbadmin module for multi-team administration
+
+
+  # Schemas are meant to be stored in database.
+  schemas:
+
+    Team:
+      description: >
+        Team Information. Accessible to members to read, chiefs only to write
+      type: object
+      properties:
+        name:
+          description: >
+            Team name
+          type: string
+          maxLength: 128
+          default: 'Radio Bretzel Team'
+        description:
+          description: >
+            Team decription, welcome text.
+          type: string
+          maxLength: 4096
+          default: >
+            Welcome to your Radio Bretzel Team ! Discover its channels and say
+            hi to your friends !
+        logo:
+          description: >
+            Team logo encoded in base64. Max size 128px*128px
+          type: string
+          format: base64
+          example: data:image/png;base64,izjeifJJEFIIEF9DAXZZxzafkegelXXKXO...
+        icon:
+          description: >
+            Team icon encoded in base64. Max size 32px*32px
+          type: string
+          format: base64
+          example: data:image/png;base64,iVBORw0KGgoAAAANzezrhjofzekGEKhtd...
+
+    Member:
+      description: >
+        Team Member object. Members are regular users in a team.
+      type: object
+      properties:
+        slug:
+          description: >
+            Member's 'username' used as unique identifier, with email address.
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+          example: john-doe
+        email:
+          description: >
+            Member's email address used as unique identifier with slug.
+          type: string
+          format: email
+          example: john@radiobretzel.org
+        password:
+          description: >
+            Member's salted password hash
+          type: string
+          format: sha512
+        salt:
+          description: >
+            Member's salt used to hash member's password
+          type: string
+        name:
+          description: >
+            Member's display name
+          type: string
+          minLength: 2
+          maxLength: 128
+          example: John Doe
+        description:
+          description: >
+            Member's description, bio, introduction text.
+          type: string
+          maxLength: 4096
+          example: Hi I'm John.
+        avatar:
+          description: >
+            Member's avatar, encoded in base64. Max size 128px*128px
+          type: string
+          format: base64
+          example: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAA...
+        scopes:
+          description: >
+            List of member's oauth scopes.
+          type: array
+          items:
+            type: string
+          default:
+            - 'member'
+        disabled:
+          description: >
+            Set to true to disable the user
+          type: boolean
+          default: false
+      required:
+        - slug
+        - email
+
+    Channel:
+      description: >
+        Channels are rooms to chat and listen to music with friends
+      type: object
+      properties:
+        slug:
+          description: >
+            Channel unique identifier.
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+          example: jazz-n-groove
+        name:
+          description: >
+            Channel common name
+          type: string
+          maxLength: 128
+          example: Jazz & Groove
+        description:
+          description: >
+            Channel public description.
+          type: string
+          maxLength: 4096
+          example: Channel dedicated to Jazz and Funk music
+        archived:
+          description: >
+            Soft delete Channel attribute
+          type: boolean
+          default: false
+        source:
+          $ref: '#/components/schemas/Source'
+      required:
+        - slug
+        - archived
+
+    Source:
+      description: >
+        Sources represent audio streams
+      type: object
+      properties:
+        channel:
+          description: >
+            Parent channel's slug. It is used as a primary key, and set at creation
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+          example: jazz-n-groove
+        type:
+          description: >
+            Source type. Can be internal, as generated by Radio Bretzel, or
+            HTTP, as an exiting external stream.
+          type: string
+          enum:
+            - internal
+            - http
+          default: internal
+          readOnly: true
+        status:
+          description: >
+            Source status is dynamically retrieved. The way to retrieve this
+            status depends on the source engine (see `Source.config`).
+            When source is functionnal, its status is set to `playing`.
+            When source is disabled, its status is set to `stopped`.
+            If in any other case, the `dead` status should be used, and alerts
+            sent to chief in order
+          type: string
+          enum:
+            - playing
+            - stopped
+            - dead
+        endpoint:
+          description: >
+            Source public endpoint. This represents the url the user will use
+            to connect to the audio stream. It is automatically generated using
+            the `RBSTREAM_SERVER` and `RBSTREAM_PORT` configuration attributes
+            and `Source.channel` slug.
+          type: string
+          format: url
+          readOnly: true
+          example: https://team.radiobretzel.org/stream/jazz-n-groove
+        config:
+          description: >
+            Source configuration. This attribute is available to chief and admin
+            only, members are not allowed to view it. Check both types schemas
+            to learn more.
+          oneOf:
+            - $ref: '#/components/schemas/SourceInternal'
+            - $ref: '#/components/schemas/SourceHTTP'
+          discriminator:
+            propertyName: type
+            mapping:
+              internal: SourceInternal
+              http: SourceHTTP
+      required:
+        - channel
+        - config
+        - endpoint
+
+    SourceInternal:
+      description: >
+        Groups all internal sources engines. These can only be edited by admin
+        through team configuration.
+      allOf:
+        - type: object
+          required:
+            - engine
+          properties:
+            engine:
+              description: >
+                Source engine represents the way audio stream will be generated
+              type: string
+              enum:
+                - docker
+        - oneOf:
+          - $ref: '#/components/schemas/SourceInternalDocker'
+          discriminator:
+            propertyName: engine
+            mapping:
+              docker: '#/components/schemas/SourceInternalDocker'
+
+    SourceInternalDocker:
+      description: >
+        Handle an audio running in a docker container
+      type: object
+      required:
+        - docker_uri
+        - image
+      properties:
+        docker_uri:
+          type: string
+          description: >
+            The docker API endpoint. Loaded from team configuration
+          format: uri
+          readOnly: true
+          example: unix:///var/run/docker.sock
+        image:
+          type: string
+          description: >
+            Docker image name and tag. Loaded from team configuration
+          pattern: '^(?:.+\/)?([^:]+)(?::.+)?$'
+          readOnly: true
+          example: registry.radiobretzel.org/rb-src-liquidsoap:latest
+        container_id:
+          type: string
+          description: >
+            Source's Docker container id
+          readOnly: true
+        container_name:
+          type: string
+          description: >
+            Source's Docker container name
+          readOnly: true
+        command:
+          type: string
+          description: >
+            Docker command used at container's runtime
+          readOnly: true
+        environment:
+          type: object
+          description: >
+            Environment variables dictionnary loaded from team configuration.
+            Keys must be uppercase
+          properties:
+            RBSOURCE_CHANNEL_SLUG:
+              description: >
+                automatically set using `Source.channel`
+              type: string
+            RBSOURCE_RBTRACKMAN_URI:
+              description: >
+                automatically set using team configuration
+              type: string
+          additionalProperties:
+            type: string
+          required:
+            - RBSOURCE_CHANNEL_SLUG
+            - RBSOURCE_RBTRACKMAN_URI
+        networks:
+          type: array
+          description: >
+            Docker networks our source container should connect to, as an array
+            of Docker network names loaded from team configuration
+          items:
+            type: string
+          readOnly: true
+
+    SourceHTTP:
+      description: >
+        External HTTP existing source.
+      type: object
+      properties:
+        uri:
+          description: >
+            External HTTP audio stream url
+          type: string
+          format: url
+          example: https://s2.radio.co/sdf9aeb4e9/listen
+      required:
+        - uri
+
+    Message:
+      description: >
+        Text messages object.
+      type: object
+      properties:
+        _id:
+          description: Message unique identifier. Generated automatically
+          type: string
+          format: uuid
+        channel:
+          description: Channel's slug where message is attached.
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+          example: jazz-n-groove
+        author:
+          description: author's slug
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+          example: john-doe
+        sent_at:
+          description: message's sending datetime
+          type: string
+          format: datetime
+          readOnly: true
+          example: 2018-07-21T17:32:28Z
+        content:
+          description: body of the message
+          type: string
+          minLength: 1
+          maxLength: 4096
+          example: Wow ! I love this track !
+        edited:
+          description: Set at true if message have been edited
+          type: boolean
+          default: false
+      required:
+        - _id
+        - channel
+        - author
+        - sent_at
+        - content
+        - edited
+
+    Config:
+      description: >
+        Team main configuration object. This configuration is stored in database
+        and is updatable by admins (if this team is attached to a Radio Bretzel
+        Admin module)
+      type: object
+      properties:
+        members_limit:
+          description: >
+            Maximum number of members allowed to join the team.
+          type: integer
+          minimum: 1
+          default: 20
+        channels_limit:
+          description: >
+            Maximum number of channels allowed in the team.
+          type: integer
+          minimum: 1
+          default: 5
+
+    RegistrationToken:
+      description: >
+        Registrations tokens are generated when chief wants to invite a new member
+        in the team. The future member will be allowed to register by providing
+        the registration token chief will have sent to him.
+        These are one time use.
+      type: string
+      format: JWT
+      example: todo
+
+
+  # Every parameter should be validated
+  parameters:
+    MemberSlugPath:
+      in: path
+      name: 'slug'
+      description: >
+        Team Member slug. This slug must be alphanumeric and lowercase only. It
+        can contain but can't start nor end with one or two max dashes (-).
+      required: true
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 64
+        pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+
+    MemberSlugQuery:
+      in: query
+      name: 'slug'
+      description: >
+        Team Member slug. This slug must be alphanumeric and lowercase only. It
+        can contain but can't start nor end with one or two max dashes (-).
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 64
+        pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+
+    MemberEmailQuery:
+      in: query
+      name: 'email'
+      description: >
+        Team Member email address
+      schema:
+        type: string
+        format: email
+
+    MemberPasswordQuery:
+      in: query
+      name: 'password'
+      description: >
+        Team Member's password
+      schema:
+        type: string
+        format: password
+      required: true
+
+    MemberNameQuery:
+      in: query
+      name: 'name'
+      description: Member's display name
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 128
+
+    MemberDescriptionQuery:
+      in: query
+      name: 'description'
+      description: >
+        Member's description, little bio.
+      schema:
+        type: string
+        maxLength: 4096
+
+    MemberScopesQuery:
+      in: query
+      name: 'scopes'
+      description: >
+        List of member's oauth scopes
+      schema:
+        type: array
+        items:
+          type: string
+
+    ChannelSlugPath:
+      in: path
+      name: 'slug'
+      description: >
+        Channel's unique identifier. This slug must be alphanumeric and lowercase only. It
+        can contain but can't start nor end with one or two max dashes (-).
+      required: true
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 64
+        pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+
+    ChannelNameQuery:
+      in: query
+      name: 'name'
+      description: Channel common name
+      schema:
+        type: string
+        maxLength: 128
+
+    ChannelDescriptionQuery:
+      in: query
+      name: 'description'
+      description: >
+        Channel description. Write any thing you want !
+      schema:
+        type: string
+        maxLength: 4096
+
+    ChannelArchivedQuery:
+      in: query
+      name: 'archived'
+      description: >
+        Allows chief to request archived channels. This parameter is forbidden
+        for chief scpoed users, and using it will return a HTTP 400 response.
+      schema:
+        type: boolean
+        default: false
+
+    SourceChannelPath:
+      in: path
+      name: 'channel'
+      description: >
+        Source's parent channel slug
+      required: true
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 64
+        pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+
+    SourceTypeQuery:
+      in: query
+      name: 'type'
+      description: >
+        Source type. See Source model for more.
+      schema:
+        type: string
+        enum:
+          - internal
+          - external
+
+    SourceStatusQuery:
+      in: query
+      name: 'status'
+      description: >
+        Source status filter
+      schema:
+        type: string
+        enum:
+          - playing
+          - stopped
+          - dead
+
+    MessageIdPath:
+      in: path
+      name: 'id'
+      description: Message unique identifier
+      schema:
+        type: string
+        format: uuid
+      required: true
+
+
+  # Views are representations of schemas as recieved by members.
+  x-Views:
+    # Views
+    TeamMember:
+      description: View of team object for members
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Team'
+      example: 
+        name: Groovy Team
+        description: Dat team's so groovy.
+        logo: >
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI
+          [...]
+          EARBEARBEDQxa9b/Abowqb7ejVR+AAAAAElFTkSuQmCC
+        icon:
+          data:image/png;base64,zeijfEIGIJEencdeZUFZZDZJZi
+          [...]
+          EFEJECBEUCE/DEFIJXUEfebfXZjdfIZBZRS+CNZADZDC
+
+    TeamChief:
+      description: View of team object for chief
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Team'
+        - type: object
+          properties:
+            config:
+              $ref: '#/components/schemas/Config'
+      example:
+        name: Groovy Team
+        description: Dat team's so groovy.
+        logo: >
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI
+          [...]
+          EARBEARBEDQxa9b/Abowqb7ejVR+AAAAAElFTkSuQmCC
+        icon:
+          data:image/png;base64,zeijfEIGIJEencdeZUFZZDZJZi
+          [...]
+          EFEJECBEUCE/DEFIJXUEfebfXZjdfIZBZRS+CNZADZDC
+        config:
+          members_limit: 20
+          channels_limit: 5
+
+    ConfigChief:
+      description: View of config object for chief
+      type: object
+      schema:
+        $ref: '#/components/schemas/Config'
+      example:
+        members_limit: 20
+        channels_limit: 5
+
+    Profile:
+      description: View of current member profile
+      type: object
+      properties:
+        slug:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        avatar:
+          type: string
+          format: base64
+        is_chief:
+          type: boolean
+      example:
+        slug: john-doe
+        email: john.doe@radiobretzel.org
+        name: John Doe
+        description: Hi I'm John
+        avatar: >
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI
+          [...]
+          EARBEARBEDQxa9b/Abowqb7ejVR+AAAAAElFTkSuQmCC
+        scopes:
+          - member
+
+    MemberMember:
+      description: View of a member of for members
+      type: object
+      properties:
+        slug:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        avatar:
+          type: string
+          format: base64
+        is_chief:
+          type: boolean
+      example:
+        slug: john-doe
+        email: john.doe@radiobretzel.org
+        name: John Doe
+        description: Hi I'm John
+        avatar: >
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI
+          [...]
+          EARBEARBEDQxa9b/Abowqb7ejVR+AAAAAElFTkSuQmCC
+        scopes:
+          - member
+
+    MemberChief:
+      description: View of a member for chief
+      type: object
+      properties:
+        slug:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        avatar:
+          type: string
+          format: base64
+        is_chief:
+          type: boolean
+        disabled:
+          type: boolean
+      example:
+        slug: john-doe
+        email: john.doe@radiobretzel.org
+        disabled: false
+        name: John Doe
+        description: Hi I'm John
+        avatar: >
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI
+          [...]
+          EARBEARBEDQxa9b/Abowqb7ejVR+AAAAAElFTkSuQmCC
+        scopes:
+          - member
+
+    ChannelMember:
+      description: View of channel object for members
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        source:
+          $ref: '#/components/x-Views/SourceMember'
+      example:
+        slug: jazz-n-groove
+        name: Jazz & Groove
+        description: Channel dedicated to Jazz and Funk music
+        source: 
+          endpoint: https://team.radiobretzel.org/stream/jazz-n-groove
+          type: internal
+          status: playing
+
+    ChannelChief:
+      description: View of channel object for chief
+      type: object
+      properties:
+        slug:
+          description: Channel's slug
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        archived:
+          type: boolean
+        source:
+          $ref: '#/components/x-Views/SourceChief'
+      example:
+        slug: jazz-n-groove
+        archived: false
+        name: Jazz & Groove
+        description: Channel dedicated to Jazz and Funk music
+        source:
+          endpoint: https://team.radiobretzel.org/stream/jazz-n-groove
+          type: internal
+          status: playing
+          
+    SourceMember:
+      description: View of source object for member
+      type: object
+      properties:
+        endpoint:
+          type: string
+        status:
+          type: string
+          enum:
+            - playing
+            - stopped
+            - dead
+      example:
+        endpoint: https://team.radiobretzel.org/stream/jazz-n-groove
+        type: internal
+        status: playing
+
+    SourceChief:
+      description: View of source object for chief
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - internal
+            - http
+        endpoint:
+          type: string
+        status:
+          type: string
+          enum:
+            - playing
+            - stopped
+            - dead
+        config:
+          description: >
+            Only for external sources
+          oneOf:
+            - $ref: '#/components/schemas/SourceHTTP'
+      example:
+        endpoint: https://team.radiobretzel.org/stream/jazz-n-groove
+        type: internal
+        status: playing
+
+    AfterLogin:
+      description: View sent after member login
+      type: object
+      properties:
+        access_token:
+          $ref: '#/components/x-Views/AccessToken'
+        refresh_token:
+          $ref: '#/components/x-Views/RefreshToken'
+
+    AccessToken:
+      description: >
+        JWT encoded access Token. See Token Formats for more infos
+      type: string
+      format: JWT
+      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+    RefreshToken:
+      description: >
+        JWT encoded refresh Token. See Token Formats for more infos
+      type: string
+      format: JWT
+      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+    RegistrationToken:
+      description: >
+        JWT encoded registration Token. See Token Formats for more infos
+      type: string
+      format: JWT
+      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+    ValidationError:
+      type: array
+      description: >
+        List of validation errors, as objects. Keys represent parameters,
+        values are error message
+      items:
+        type: object
+        schema:
+          field:
+            description: parameter which failed validation
+            type: string
+          message:
+            description: error description
+            type: string
+      example:
+        - field: field_name
+          message: this parameter is required / not matching the required pattern
+
+  responses:
+
+    ValidationFailed:
+      description: Some given arguments were incorrect
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/x-Views/ValidationError'
+            
+    Unauthorized:
+      description: Access is restricted to logged users
+
+    Forbidden:
+      description: Access is refused due to unsufficient permissions
+
+    NotFound:
+      description: The resource asked was not found
+
+    Conflict:
+      description: >
+        The resource could not be created because a resource with the given
+        identifier already exists
+
+    InternalServerError:
+      description: >
+        Something went wrong on our side. If this message persists,
+        please contact your Radio Bretzel admininstrator
+
+
+  x-token-formats:
+    JWTBase:
+      description: >
+        Base class of JWT payload containing registered claims used by tokens.
+      type: object
+      properties:
+        exp:
+          description: JWT registered claim of AccessToken expiration datetime
+          type: string
+          format: datetime
+        iat:
+          description: >
+            JWT registered claim designating the datetime when the token has been
+            generated.
+          type: string
+          format: datetime
+        jti:
+          description: >
+            JWT registered claim designating the JWT unique identifier.
+          type: string
+
+    AccessToken:
+      description: >
+        Authentication payload. Contains team information, scopes, user identity.
+        Has a very short lifetime and cannot be revoked.
+        It's validated locally as much as possible to avoid network overload
+      allOf:
+        - $ref: '#/components/x-token-formats/JWTBase'
+        - type: object
+          description: JWT extra registered claims
+          properties:
+            sub:
+              description: >
+                JWT registered claim designating the subject of the token.
+                Constant to 'access'
+              type: string
+              enum:
+                - access
+            aud:
+              description: >
+                JWT registered claim designating the audience of the token.
+                Stores the base64 encoded User-Agent used to request this token
+                creation at member's login.
+              type: string
+        - type: object
+          description: rbTeam user related payload
+          properties:
+            team:
+              description: Team slug of the token's owner
+              type: string
+              minLength: 2
+              maxLength: 64
+              pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+            member:
+              description: Team member's slug.
+              type: string
+              minLength: 2
+              maxLength: 64
+              pattern: '^([a-z][a-z0-9]*)((?:-[a-z0-9]+){0,2})$'
+            scopes:
+              description: List of member's oAuth scopes
+              type: array
+              items:
+                type: string
+                enum:
+                  - chief
+                  - member
+
+    RefreshToken:
+      description: >
+        JWT payload for Refresh Tokens. Generated at member login
+      allOf:
+        - $ref: '#/components/x-token-formats/JWTBase'
+        - type: object
+          properties:
+            sub:
+              description: >
+                JWT registered claim designating the subject of the token.
+                Constant to 'refresh'
+              type: string
+              enum:
+                - refresh
+            aud:
+              description: >
+                JWT registered claim designating the audience of the token.
+                Stores the base64 encoded User-Agent used to request this token
+                creation at member's login.
+              type: string
+
+    RegistrationToken:
+      description: >
+        JWT payload for Registrtion Token. They are generated at member
+        login
+      allOf:
+        - $ref: '#/components/x-token-formats/JWTBase'
+        - type: object
+          properties:
+            sub:
+              description: >
+                JWT registered claim designating the subject of the token.
+                Constant to 'refresh'
+              type: string
+              enum:
+                - refresh
+            aud:
+              description: >
+                JWT registered claim designating the audience of the token.
+                Optional, stores the base64 encoded email address of the invited
+                user.
+              type: string
+

@@ -57,7 +57,7 @@ setup(
     version='0.2.0',
     description='Radio Bretzel core app. Make your own webradios !',
     long_description=long_description,
-    url='https://source.radiobretzel.org/app/rb-core',
+    url='https://source.radiobretzel.org/app/rb-team',
     author="Radio Bretzel Org",
     author_email="radiobretzel@ntymail.com",
     license="None",
@@ -80,7 +80,7 @@ setup(
     extras_require=EXTRA_REQUIREMENTS,
     entry_points={
         'console_scripts': [
-            'rb-core=rbcore.cli:main'
+            'rb-team=rbteam.cli:main'
         ]
     },
     cmdclass={'pytest': PyTests},

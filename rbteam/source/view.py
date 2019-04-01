@@ -1,8 +1,8 @@
 """
-    rbcore.source.view
+    rbteam.source.view
     ~~~~~~~~~~~~~~~~~~~
 
-    This module handles views for Source objects in rbcore application
+    This module handles views for Source objects in rbteam application
 
     More info in documentation at https://docs.radiobretzel.org
 """

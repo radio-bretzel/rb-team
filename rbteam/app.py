@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    rbcore.app
+    rbteam.app
     ~~~~~~~~~~
 
     This module implements the central WSGI application object.
@@ -11,8 +11,8 @@
 
 from flask import Flask
 
-from rbcore import config, errors
-from rbcore import channel, source
+from rbteam import config, errors
+from rbteam import channel, source
 
 
 def create_app(

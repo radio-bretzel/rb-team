@@ -1,7 +1,3 @@
-variables:
-  PYLINT_IMG: registry.radiobretzel.org/hosting/dockerfile-store/python:pylint
-
-
 stages:
   - build
   - lint
@@ -15,13 +11,28 @@ build:
   script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
     - docker build -t $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA .
+    - docker build -t $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA-test -f Dockerfile-test .
 
+
+pylint:
+  stage: lint
+  image: $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA-test
+  except:
+    refs:
+      - develop
+      - master
+  allow_failure: true
+  script:
+    - python -m pylint rbcore
+    - python -m pylint tests
+    - python -m pylint setup.py
 
 pylint_master:
   stage: lint
-  image: $PYLINT_IMG
+  image: $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA-test
   only:
     refs:
+      - develop
       - master
   script:
     - python -m pylint rbcore
@@ -31,7 +42,7 @@ pylint_master:
 
 pytest:
   stage: test
-  image: $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA
+  image: $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA-test
   services:
     - name: mongo:latest
       alias: "test-db"
@@ -39,7 +50,6 @@ pytest:
     FLASK_ENV: "development"
     RBCORE_MONGO_HOST: "test-db"
   script:
-    - pip install .[test]
     - python setup.py test
 
 
@@ -71,3 +81,4 @@ cleanup_fail:
   when: on_failure
   script:
     - docker image rm -f $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA
+    - docker image rm -f $CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA-test

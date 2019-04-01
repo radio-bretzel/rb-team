@@ -4,7 +4,8 @@ WORKDIR /usr/src/rb-team
 
 COPY . .
 
-RUN pip install .
+RUN pip install . && \
+  pip install .[test]
 
 VOLUME /usr/src/rb-team /var/run/docker.sock
 EXPOSE 5000

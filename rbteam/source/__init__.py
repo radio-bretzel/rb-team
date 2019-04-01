@@ -1,5 +1,5 @@
 """
-    rbcore.source
+    rbteam.source
     ~~~~~~~~~~~~~
 
     This module handles Radio Bretzel source and provides a standard interface
@@ -10,9 +10,9 @@
 
 from flask import request, abort
 
-from rbcore.source import view
-from rbcore.source.model import Sources
-from rbcore.errors import DatabaseError, ValidationError, DatabaseNotFound
+from rbteam.source import view
+from rbteam.source.model import Sources
+from rbteam.errors import DatabaseError, ValidationError, DatabaseNotFound
 
 def routes(app):
     """ All routes for source resources"""

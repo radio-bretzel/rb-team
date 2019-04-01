@@ -1,8 +1,8 @@
 """
-    rbcore.channel.view
+    rbteam.channel.view
     ~~~~~~~~~~~~~~~~~~~
 
-    This module handles views for Channel objects in rbcore application
+    This module handles views for Channel objects in rbteam application
 
     More info in documentation at https://docs.radiobretzel.org
 """

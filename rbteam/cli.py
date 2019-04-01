@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    rbcore.cli
+    rbteam.cli
     ~~~~~~~~~~
 
     Little command line interface for running the app.
@@ -11,13 +11,13 @@
 
 from argparse import ArgumentParser
 
-from rbcore import create_app
+from rbteam import create_app
 
 PARSER = ArgumentParser()
 
 PARSER.add_argument(
     '--debug',
-    help="Run rb-core in debug mode. This argument is implicit when rb-core \
+    help="Run rb-team in debug mode. This argument is implicit when rb-team \
     is run in development or test environments.",
     dest="debug",
     action="store_true"

@@ -1,5 +1,5 @@
 """
-    rbcore.channel
+    rbteam.channel
     ~~~~~~~~~~~~~~
 
     This module handles channel routes and public interface for Flask.
@@ -10,11 +10,11 @@
 
 from flask import request, abort
 
-from rbcore.channel.model import Channel, Channels
-from rbcore.channel import view
-from rbcore.errors import DatabaseError, ValidationError
-from rbcore.source import view as source_view
-from rbcore.utils import formats, validations
+from rbteam.channel.model import Channel, Channels
+from rbteam.channel import view
+from rbteam.errors import DatabaseError, ValidationError
+from rbteam.source import view as source_view
+from rbteam.utils import formats, validations
 
 
 def routes(app):

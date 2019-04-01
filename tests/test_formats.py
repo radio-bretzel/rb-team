@@ -1,10 +1,10 @@
 import pytest
 
-import rbcore
+import rbteam
 
 # Formats tests
 def test_formats_id_to_name():
-    assert rbcore.utils.formats.id_to_name('this-is-slug') == 'This Is Slug'
+    assert rbteam.utils.formats.id_to_name('this-is-slug') == 'This Is Slug'
 
 def test_formats_get_prefixed_keys():
     set = {
@@ -12,7 +12,7 @@ def test_formats_get_prefixed_keys():
         'toto_key2': 'test',
         'toto_key3': 'test'
     }
-    result = rbcore.utils.formats.get_prefixed_keys(set, 'toto_')
+    result = rbteam.utils.formats.get_prefixed_keys(set, 'toto_')
     assert result.get('matching') == {
         'key2': 'test',
         'key3': 'test'
